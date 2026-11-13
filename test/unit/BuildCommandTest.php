@@ -14,7 +14,9 @@ namespace CommonDocTest\Aggregate;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Console\BuildCommand;
+use CommonDoc\Aggregate\Discovery\DiscoveryFailed;
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
 use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
 use CommonDoc\Aggregate\Exception\SourceUnavailableException;
@@ -81,6 +83,29 @@ final class BuildCommandTest extends TestCase
             'site:build: 2 pages in 3 projects (1 ok, 1 partial, 1 failed, 0 skipped)',
             $tester->getDisplay(),
         );
+    }
+
+    #[Test]
+    public function exitsTwoWithADiagnosticAndNoReportWhenNoProjectCanBeDiscovered(): void
+    {
+        $projects = $this->createStub(ProjectSourceInterface::class);
+        $projects
+            ->method('all')
+            ->willThrowException(
+                DiscoveryFailed::missingToken('COMMONDOC_TOKEN'),
+            );
+
+        $discovery = $this->createStub(ProjectSourceFactoryInterface::class);
+        $discovery->method('create')->willReturn($projects);
+
+        $tester = new CommandTester($this->command(source: $discovery));
+
+        $statusCode = $tester->execute(['--site' => $this->siteFile()], self::SEPARATE_STREAMS);
+
+        static::assertSame(2, $statusCode);
+        static::assertStringContainsString('COMMONDOC_TOKEN', $tester->getErrorOutput());
+        static::assertSame('', $tester->getDisplay());
+        static::assertFalse(is_file($this->reportPath()));
     }
 
     #[Test]
@@ -176,23 +201,35 @@ final class BuildCommandTest extends TestCase
         array $candidates = [],
         array $unavailable = [],
         array $missing = [],
+        ?ProjectSourceFactoryInterface $source = null,
     ): BuildCommand {
-        $discovery = $this->createStub(ProjectSourceInterface::class);
-        $discovery->method('all')->willReturn(array_map(self::project(...), $projects));
-
         $renderers = $this->createStub(SiteRendererFactoryInterface::class);
         $renderers->method('create')->willReturn(new SiteRenderer());
 
         return new BuildCommand(
             new SiteConfigReader(),
             new SiteBuildFactory(
-                discovery : $discovery,
+                projects  : $source ?? $this->projects($projects),
                 sources   : $this->sources($candidates, $unavailable, $missing),
                 strategies: new StrategyFactory(),
                 renderers : $renderers,
             ),
             new ReportFileFactory(),
         );
+    }
+
+    /**
+     * @param list<non-empty-string> $projects
+     */
+    private function projects(array $projects): ProjectSourceFactoryInterface
+    {
+        $projectsSource = $this->createStub(ProjectSourceInterface::class);
+        $projectsSource->method('all')->willReturn(array_map(self::project(...), $projects));
+
+        $discovery = $this->createStub(ProjectSourceFactoryInterface::class);
+        $discovery->method('create')->willReturn($projectsSource);
+
+        return $discovery;
     }
 
     private function reportPath(): string

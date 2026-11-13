@@ -16,7 +16,7 @@ namespace CommonDocTest\Aggregate\Build\Container;
 
 use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
-use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactory;
@@ -60,8 +60,8 @@ final class SiteBuildFactoryFactoryTest extends TestCase
         $container = new ServiceManager();
 
         $container->setService(
-            ProjectSourceInterface::class,
-            $this->createStub(ProjectSourceInterface::class),
+            ProjectSourceFactoryInterface::class,
+            $this->createStub(ProjectSourceFactoryInterface::class),
         );
         $container->setService(SourceFactoryInterface::class, new SourceFactory());
         $container->setService(StrategyFactory::class, new StrategyFactory());

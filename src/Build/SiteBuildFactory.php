@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Build;
 
 use CommonDoc\Aggregate\Config\SiteConfig;
-use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
 use CommonDoc\Aggregate\Version\StrategyFactory;
@@ -30,12 +30,13 @@ use Override;
  * The source is built once here and handed to both the renderer and the project build, so a project
  * is listed and then read against one checkout cache. Everything the build needs that does not come
  * from the configuration is injected, so this is the only class that knows the order in which the
- * pieces fit together.
+ * pieces fit together. Discovery is the one seam that is itself a factory, because the organization
+ * it lists belongs to the configuration and therefore cannot be known when the container is built.
  */
 final readonly class SiteBuildFactory implements SiteBuildFactoryInterface
 {
     public function __construct(
-        private ProjectSourceInterface $discovery,
+        private ProjectSourceFactoryInterface $projects,
         private SourceFactoryInterface $sources,
         private StrategyFactory $strategies,
         private SiteRendererFactoryInterface $renderers,
@@ -56,7 +57,7 @@ final readonly class SiteBuildFactory implements SiteBuildFactoryInterface
         );
 
         return new SiteBuild(
-            discovery   : $this->discovery,
+            discovery   : $this->projects->create(config: $config),
             renderer    : $renderer,
             projectBuild: new ProjectBuild(
                 source    : $source,

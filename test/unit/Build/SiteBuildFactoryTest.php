@@ -17,6 +17,7 @@ namespace CommonDocTest\Aggregate\Build;
 use CommonDoc\Aggregate\Build\SiteBuild;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
+use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
@@ -74,8 +75,11 @@ final class SiteBuildFactoryTest extends TestCase
         ?SourceFactoryInterface $sources = null,
         ?SiteRendererFactoryInterface $renderers = null,
     ): SiteBuildFactory {
+        $projects = $this->createStub(ProjectSourceFactoryInterface::class);
+        $projects->method('create')->willReturn($this->createStub(ProjectSourceInterface::class));
+
         return new SiteBuildFactory(
-            discovery : $this->createStub(ProjectSourceInterface::class),
+            projects  : $projects,
             sources   : $sources ?? $this->createStub(SourceFactoryInterface::class),
             strategies: new StrategyFactory(),
             renderers : $renderers ?? $this->createStub(SiteRendererFactoryInterface::class),
