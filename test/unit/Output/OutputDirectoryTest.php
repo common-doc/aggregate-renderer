@@ -105,6 +105,12 @@ final class OutputDirectoryTest extends TestCase
     }
 
     #[Test]
+    public function normalisesTheSeparatorsOfAWindowsStyleRoot(): void
+    {
+        static::assertSame('C:/site/output', new OutputDirectory(root: 'C:\\site\\output')->root());
+    }
+
+    #[Test]
     public function recreatesADirectoryThatDoesNotExistYet(): void
     {
         $root = "{$this->directory}/absent";
