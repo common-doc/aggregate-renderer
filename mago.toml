@@ -10,3 +10,15 @@ baseline = "analysis-baseline.toml"
 [source]
 paths = ["src", "test"]
 includes = ["vendor"]
+
+# Additive boundary rule for the namespace split. `CommonDoc\Render\` belongs to
+# common-doc/commondoc, which provides the document rendering seam this package consumes. A symbol
+# declared under that namespace here would be a second, competing copy of a shared surface, so the
+# guard gate rejects it rather than leaving the split to review.
+#
+# `must-be = []` bans every symbol kind. `**` matches zero or more segments, so the rule holds a
+# direct child (`CommonDoc\Render\Page`) and any descendant alike.
+[[guard.structural.rules]]
+on = "CommonDoc\\Render\\**\\*"
+must-be = []
+reason = "CommonDoc\\Render is owned by common-doc/commondoc and is never declared in this package."

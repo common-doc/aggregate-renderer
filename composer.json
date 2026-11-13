@@ -1,11 +1,12 @@
 {
-    "name": "webware/skeleton",
-    "description": "Greenfield starter for Webware packages: shared tooling config, the organization's required CI workflow contract, and a containerized dev environment.",
+    "name": "common-doc/aggregate-renderer",
+    "description": "Renders every onboarded documentation project and version into one aggregate site tree.",
     "license": "BSD-3-Clause",
     "keywords": [
-        "webware",
-        "mezzio",
-        "skeleton"
+        "common-doc",
+        "aggregate",
+        "documentation",
+        "markdown"
     ],
     "authors": [
         {
@@ -16,12 +17,21 @@
     ],
     "extra": {
         "laminas": {
-            "config-provider": "Webware\\Skeleton\\ConfigProvider"
+            "config-provider": "CommonDoc\\Aggregate\\ConfigProvider"
         }
     },
     "require": {
-        "php": "~8.4.1 || ~8.5.0",
-        "psr/container": "^2.0"
+        "php": "~8.4.1 || ~8.5.0 || ~8.6.0",
+        "common-doc/commondoc": "^1.0",
+        "laminas/laminas-diactoros": "^3.8",
+        "laminas/laminas-view": "^3.1",
+        "league/commonmark": "^2.10",
+        "psr/container": "^2.0",
+        "psr/http-client": "^1.0",
+        "psr/http-factory": "^1.1",
+        "psr/http-message": "^2.0",
+        "symfony/console": "^7.4 || ^8.0",
+        "symfony/process": "^7.4 || ^8.0"
     },
     "require-dev": {
         "infection/infection": "^0.35.0",
@@ -33,13 +43,13 @@
     },
     "autoload": {
         "psr-4": {
-            "Webware\\Skeleton\\": "src/"
+            "CommonDoc\\Aggregate\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "WebwareTest\\Skeleton\\": "test/unit/",
-            "WebwareTestIntegration\\Skeleton\\": "test/integration/"
+            "CommonDocTest\\Aggregate\\": "test/unit/",
+            "CommonDocTestIntegration\\Aggregate\\": "test/integration/"
         }
     },
     "minimum-stability": "dev",
