@@ -107,6 +107,20 @@ final class PageAddressTest extends TestCase
     }
 
     #[Test]
+    public function explainsWhenTheAddressNamesOnlyTheTailOfTheDirectory(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'The page address "https://docs.example.org/ocs/" does not name the output file "docs/index.html".',
+        );
+
+        new PageAddress(
+            file   : 'docs/index.html',
+            address: 'https://docs.example.org/ocs/',
+        );
+    }
+
+    #[Test]
     public function explainsWhenTheFileDoesNotServeADirectory(): void
     {
         $this->expectException(InvalidArgumentException::class);

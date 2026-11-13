@@ -51,6 +51,9 @@ final class GitReferencesTest extends TestCase
         $references->refFor($target, Strategy::Tree);
 
         static::assertCount(3, $runner->calls);
+        static::assertSame('ls-remote', $runner->calls[2]['arguments'][0]);
+        static::assertSame('--symref', $runner->calls[2]['arguments'][1]);
+        static::assertSame('HEAD', $runner->calls[2]['arguments'][3]);
     }
 
     #[Test]
@@ -101,6 +104,17 @@ final class GitReferencesTest extends TestCase
     }
 
     #[Test]
+    public function readsTheSymbolicReferenceFromALaterLineOfTheListing(): void
+    {
+        $runner = $this->runner()->returning("0123456789abcdef\tHEAD\nref: refs/heads/main\tHEAD\n");
+
+        static::assertSame(
+            'refs/remotes/origin/main',
+            $this->references($runner)->defaultRef($this->project()),
+        );
+    }
+
+    #[Test]
     public function reportsASourceThatNamesNoDefaultBranch(): void
     {
         $runner = $this->runner()->returning(implode("\n", ['0123456789abcdef', 'HEAD']));
@@ -114,6 +128,22 @@ final class GitReferencesTest extends TestCase
         }
 
         static::fail('A remote without a symbolic head should be reported as unavailable.');
+    }
+
+    #[Test]
+    public function requiresTheSymbolicReferenceToStartItsLine(): void
+    {
+        $runner = $this->runner()->returning("0123456789abcdef ref: refs/heads/main\tHEAD\n");
+
+        try {
+            $this->references($runner)->defaultRef($this->project());
+        } catch (SourceUnavailable $failure) {
+            static::assertSame(ReasonCode::SourceUnavailable, $failure->reasonCode);
+
+            return;
+        }
+
+        static::fail('A symbolic reference that is not at the start of its line is not one.');
     }
 
     protected function setUp(): void

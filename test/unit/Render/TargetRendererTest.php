@@ -30,9 +30,11 @@ use CommonDoc\View\Page;
 use CommonDoc\View\PageContext;
 use CommonDocTest\Aggregate\Support\Config;
 use CommonDocTest\Aggregate\Support\TemporaryDirectory;
+use InvalidArgumentException;
 use League\CommonMark\Environment\EnvironmentInterface;
 use League\CommonMark\Parser\MarkdownParser;
 use League\CommonMark\Renderer\HtmlRenderer;
+use Mezzio\Template\Exception\RenderingException;
 use Mezzio\Template\TemplateRendererInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -91,6 +93,41 @@ final class TargetRendererTest extends TestCase
     }
 
     #[Test]
+    public function clearsThePageContextAfterARejectedPage(): void
+    {
+        $context   = new PageContext();
+        $templates = $this->createStub(TemplateRendererInterface::class);
+        $templates->method('render')->willThrowException(new RuntimeException('template defect'));
+
+        $this->renderer(
+            documents: ['index.md' => "# Home\n"],
+            templates: $templates,
+            pages    : $context,
+        )->render(
+            target: $this->target(),
+            documents: ['index.md'],
+        );
+
+        static::assertNull($context->current());
+    }
+
+    #[Test]
+    public function clearsThePageContextAfterARenderedPage(): void
+    {
+        $context = new PageContext();
+
+        $this->renderer(
+            documents: ['index.md' => "# Home\n"],
+            pages    : $context,
+        )->render(
+            target: $this->target(),
+            documents: ['index.md'],
+        );
+
+        static::assertNull($context->current());
+    }
+
+    #[Test]
     public function failsEveryDocumentWhenOneCannotBeAddressed(): void
     {
         $pages = $this->renderer(documents: ['index.md' => "# Home\n", '../escape.md' => "# Escape\n"])
@@ -104,9 +141,16 @@ final class TargetRendererTest extends TestCase
         foreach ($pages as $page) {
             static::assertSame(PageStatus::Failed, $page->status);
             static::assertSame(ReasonCode::RenderFailed, $page->reasonCode);
+            static::assertFalse($page->fromCache);
         }
 
         static::assertFalse(is_file("{$this->directory->path}/build/aggregate-renderer/2.0/index.html"));
+    }
+
+    #[Test]
+    public function labelsAPageAfterAHyphenatedStem(): void
+    {
+        static::assertSame('Getting Started', $this->labelOf('getting-started.md'));
     }
 
     #[Test]
@@ -125,6 +169,64 @@ final class TargetRendererTest extends TestCase
     public function labelsTheRootDocumentAfterItsProject(): void
     {
         static::assertSame('aggregate-renderer', $this->labelOf('index.md'));
+    }
+
+    #[Test]
+    public function ordersThePagesByAddressRatherThanByTheOrderTheSourceListedThem(): void
+    {
+        $pages = $this->renderer(documents: ['guide/beta.md' => "# Beta\n", 'guide/alpha.md' => "# Alpha\n"])
+            ->render(
+                target: $this->target(),
+                documents: ['guide/beta.md', 'guide/alpha.md'],
+            );
+
+        static::assertSame(
+            [
+                'https://docs.example.org/aggregate-renderer/2.0/guide/alpha/',
+                'https://docs.example.org/aggregate-renderer/2.0/guide/beta/',
+            ],
+            [$pages[0]->address, $pages[1]->address],
+        );
+        static::assertTrue(is_file("{$this->directory->path}/build/aggregate-renderer/2.0/guide/alpha/index.html"));
+        static::assertTrue(is_file("{$this->directory->path}/build/aggregate-renderer/2.0/guide/beta/index.html"));
+    }
+
+    #[Test]
+    public function reportsAnInvalidArgumentFromACollaboratorAsAFailedPage(): void
+    {
+        $templates = $this->createStub(TemplateRendererInterface::class);
+        $templates->method('render')->willThrowException(new InvalidArgumentException('bad argument'));
+
+        $pages = $this->renderer(
+            documents: ['index.md' => "# Home\n"],
+            templates: $templates,
+        )->render(
+            target: $this->target(),
+            documents: ['index.md'],
+        );
+
+        static::assertSame(PageStatus::Failed, $pages[0]->status);
+        static::assertSame(ReasonCode::RenderFailed, $pages[0]->reasonCode);
+        static::assertFalse($pages[0]->fromCache);
+    }
+
+    #[Test]
+    public function reportsATemplateContractExceptionAsAFailedPage(): void
+    {
+        $templates = $this->createStub(TemplateRendererInterface::class);
+        $templates->method('render')->willThrowException(new RenderingException('no such template'));
+
+        $pages = $this->renderer(
+            documents: ['index.md' => "# Home\n"],
+            templates: $templates,
+        )->render(
+            target: $this->target(),
+            documents: ['index.md'],
+        );
+
+        static::assertSame(PageStatus::Failed, $pages[0]->status);
+        static::assertSame(ReasonCode::RenderFailed, $pages[0]->reasonCode);
+        static::assertFalse($pages[0]->fromCache);
     }
 
     #[Test]
@@ -249,6 +351,7 @@ final class TargetRendererTest extends TestCase
     private function renderer(
         array $documents = [],
         ?TemplateRendererInterface $templates = null,
+        ?PageContext $pages = null,
     ): TargetRenderer {
         $source = $this->createStub(SourceInterface::class);
         $source
@@ -260,6 +363,7 @@ final class TargetRendererTest extends TestCase
         return $this->targetRenderer(
             source   : $source,
             templates: $templates,
+            pages    : $pages,
         );
     }
 
@@ -279,8 +383,9 @@ final class TargetRendererTest extends TestCase
     private function targetRenderer(
         SourceInterface $source,
         ?TemplateRendererInterface $templates = null,
+        ?PageContext $pages = null,
     ): TargetRenderer {
-        $pages       = new PageContext();
+        $pages       ??= new PageContext();
         $environment = $this->environment(
             pages    : $pages,
             templates: $templates,

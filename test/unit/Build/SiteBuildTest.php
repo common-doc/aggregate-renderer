@@ -51,6 +51,16 @@ final class SiteBuildTest extends TestCase
 {
     private TemporaryDirectory $directory;
 
+    private static function page(string $address): PageResult
+    {
+        return new PageResult(
+            address   : $address,
+            status    : PageStatus::Rendered,
+            reasonCode: null,
+            fromCache : false,
+        );
+    }
+
     private static function project(string $sitePath): Project
     {
         return new Project(
@@ -59,6 +69,39 @@ final class SiteBuildTest extends TestCase
             sitePath    : $sitePath,
             docDirectory: 'docs',
         );
+    }
+
+    #[Test]
+    public function continuesToALaterVersionWhenAnEarlierOneIsAbsent(): void
+    {
+        $renderer = new SiteRenderer();
+
+        $report = $this->build(
+            projects  : ['widget'],
+            candidates: ['widget' => ['1.0.x', '1.1.x']],
+            renderer  : $renderer,
+            missing   : ['1.0'],
+        )->build($this->config());
+
+        static::assertSame(ProjectStatus::Partial, $report->projects[0]->status);
+        static::assertSame([ReasonCode::MissingDocDirectory], $report->projects[0]->reasonCodes);
+        static::assertCount(1, $renderer->indexed);
+        static::assertSame('1.1', $renderer->indexed[0]->version);
+    }
+
+    #[Test]
+    public function countsAPartialProjectAndAFailedOneAsTwoDefects(): void
+    {
+        $report = $this->build(
+            projects  : ['alpha', 'widget'],
+            candidates: ['alpha' => ['1.0.x', '1.1.x']],
+            renderer  : new SiteRenderer(),
+            missing   : ['1.1'],
+        )->build($this->config());
+
+        static::assertSame(1, $report->totals->partial);
+        static::assertSame(1, $report->totals->failed);
+        static::assertSame(1, $report->exitCode);
     }
 
     #[Test]
@@ -149,6 +192,44 @@ final class SiteBuildTest extends TestCase
             $report->projects[0]->sitePath,
             $report->projects[1]->sitePath,
         ]);
+    }
+
+    #[Test]
+    public function ordersThePagesOfAProjectByAddress(): void
+    {
+        $outcome = ProjectOutcome::for(
+            project: self::project('widget'),
+            targets: [],
+            pages  : [
+                self::page('https://docs.example.com/widget/1.0/guide/'),
+                self::page('https://docs.example.com/widget/1.0/'),
+            ],
+            reasons: [],
+        );
+
+        static::assertSame(
+            ['https://docs.example.com/widget/1.0/', 'https://docs.example.com/widget/1.0/guide/'],
+            array_map(
+                static fn(PageResult $page): string => $page->address,
+                $outcome->result->pages,
+            ),
+        );
+    }
+
+    #[Test]
+    public function ordersTheReasonsOfAProjectByTheirWireValue(): void
+    {
+        $outcome = ProjectOutcome::for(
+            project: self::project('widget'),
+            targets: [],
+            pages  : [self::page('https://docs.example.com/widget/1.0/')],
+            reasons: [ReasonCode::RenderFailed, ReasonCode::MissingDocDirectory],
+        );
+
+        static::assertSame(
+            [ReasonCode::MissingDocDirectory, ReasonCode::RenderFailed],
+            $outcome->result->reasonCodes,
+        );
     }
 
     #[Test]

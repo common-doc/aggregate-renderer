@@ -39,6 +39,17 @@ final class ReferenceOutputTest extends TestCase
     }
 
     #[Test]
+    public function keepsScanningAfterALineThatCarriesNoTab(): void
+    {
+        $listing = implode("\n", [
+            '0123456789abcdef',
+            "fedcba9876543210\trefs/tags/v1.0.0",
+        ]);
+
+        static::assertSame(['v1.0.0'], ReferenceOutput::names($listing));
+    }
+
+    #[Test]
     public function reportsNothingForAnEmptyListing(): void
     {
         static::assertSame([], ReferenceOutput::names(''));

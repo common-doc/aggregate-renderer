@@ -38,23 +38,49 @@ final class TotalTest extends TestCase
             skipped: 4,
             pages  : 5,
         );
-        $second = new Total(
+
+        static::assertTrue($first->equals(new Total(
             ok     : 1,
             partial: 2,
             failed : 3,
             skipped: 4,
             pages  : 5,
-        );
-        $other = new Total(
+        )));
+        static::assertFalse($first->equals(new Total(
+            ok     : 2,
+            partial: 2,
+            failed : 3,
+            skipped: 4,
+            pages  : 5,
+        )));
+        static::assertFalse($first->equals(new Total(
+            ok     : 1,
+            partial: 3,
+            failed : 3,
+            skipped: 4,
+            pages  : 5,
+        )));
+        static::assertFalse($first->equals(new Total(
+            ok     : 1,
+            partial: 2,
+            failed : 4,
+            skipped: 4,
+            pages  : 5,
+        )));
+        static::assertFalse($first->equals(new Total(
+            ok     : 1,
+            partial: 2,
+            failed : 3,
+            skipped: 5,
+            pages  : 5,
+        )));
+        static::assertFalse($first->equals(new Total(
             ok     : 1,
             partial: 2,
             failed : 3,
             skipped: 4,
             pages  : 6,
-        );
-
-        static::assertTrue($first->equals($second));
-        static::assertFalse($first->equals($other));
+        )));
     }
 
     #[Test]

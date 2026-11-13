@@ -21,6 +21,7 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 use function bin2hex;
 use function file_put_contents;
@@ -28,7 +29,10 @@ use function glob;
 use function is_dir;
 use function mkdir;
 use function random_bytes;
+use function restore_error_handler;
 use function rmdir;
+use function set_error_handler;
+use function sprintf;
 use function str_replace;
 use function sys_get_temp_dir;
 use function unlink;
@@ -57,6 +61,15 @@ final class OutputDirectoryTest extends TestCase
             'bare drive' => ['C:'],
             'trailing'   => ['///'],
         ];
+    }
+
+    #[Test]
+    public function acceptsAPathEndingInASegmentThatLooksLikeADrive(): void
+    {
+        static::assertSame(
+            'docs/a:',
+            new OutputDirectory(root: 'docs/a:')->root(),
+        );
     }
 
     #[Test]
@@ -99,6 +112,10 @@ final class OutputDirectoryTest extends TestCase
         new OutputDirectory(root: $root)->empty();
 
         static::assertDirectoryExists($root);
+        static::assertNotFalse(file_put_contents(
+            filename: "{$root}/index.html",
+            data    : '<html></html>',
+        ));
     }
 
     #[Test]
@@ -108,6 +125,39 @@ final class OutputDirectoryTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         new OutputDirectory(root: $root);
+    }
+
+    #[Test]
+    public function reportsADirectoryThatCannotBeCreated(): void
+    {
+        static::assertNotFalse(file_put_contents(
+            filename: "{$this->directory}/blocked",
+            data    : 'not a directory',
+        ));
+
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            new OutputDirectory(root: "{$this->directory}/blocked/output")->empty();
+        } catch (RuntimeException $failure) {
+            static::assertSame(
+                sprintf(
+                    'The output directory "%s/blocked/output" cannot be created.',
+                    str_replace(
+                        search : '\\',
+                        replace: '/',
+                        subject: $this->directory,
+                    ),
+                ),
+                $failure->getMessage(),
+            );
+
+            return;
+        } finally {
+            restore_error_handler();
+        }
+
+        static::fail('An output directory that cannot be created is reported.');
     }
 
     protected function setUp(): void

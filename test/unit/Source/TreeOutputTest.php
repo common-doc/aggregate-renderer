@@ -35,6 +35,18 @@ final class TreeOutputTest extends TestCase
     }
 
     #[Test]
+    public function keepsScanningAfterAPathOutsideTheSourceRoot(): void
+    {
+        $listing = implode("\n", [
+            'other/index.md',
+            'docs/install.md',
+            '',
+        ]);
+
+        static::assertSame(['install.md'], TreeOutput::paths($listing, 'docs'));
+    }
+
+    #[Test]
     public function namesPathsRelativeToTheSourceRoot(): void
     {
         $listing = implode("\n", [
@@ -67,5 +79,11 @@ final class TreeOutputTest extends TestCase
             ['1.0', '1.1'],
             TreeOutput::directories(['1.0', '1.0/index.md', '1.1', '1.1/index.md']),
         );
+    }
+
+    #[Test]
+    public function trimsTheTrailingWhitespaceOfAPath(): void
+    {
+        static::assertSame(['1.0'], TreeOutput::paths("docs/1.0 \r\n", 'docs'));
     }
 }

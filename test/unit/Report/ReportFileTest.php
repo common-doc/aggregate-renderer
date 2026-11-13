@@ -26,15 +26,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 use function bin2hex;
 use function file_get_contents;
+use function file_put_contents;
 use function glob;
 use function implode;
 use function is_dir;
 use function mkdir;
 use function random_bytes;
+use function restore_error_handler;
 use function rmdir;
+use function set_error_handler;
 use function sys_get_temp_dir;
 use function unlink;
 
@@ -137,6 +141,31 @@ final class ReportFileTest extends TestCase
         $this->expectExceptionMessage('The report path is empty');
 
         new ReportFile(path: '');
+    }
+
+    #[Test]
+    public function reportsAReportDirectoryThatCannotBeCreated(): void
+    {
+        static::assertNotFalse(file_put_contents(
+            filename: "{$this->directory}/blocked",
+            data    : 'not a directory',
+        ));
+
+        $path = "{$this->directory}/blocked/report.json";
+
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            $this->reportFile($path)->write($this->completeReport());
+        } catch (RuntimeException $failure) {
+            static::assertStringContainsString('cannot be created', $failure->getMessage());
+
+            return;
+        } finally {
+            restore_error_handler();
+        }
+
+        static::fail('A report directory that cannot be created is reported.');
     }
 
     #[Test]

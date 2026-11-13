@@ -17,7 +17,10 @@ namespace CommonDocTest\Aggregate\Render;
 use CommonDoc\Aggregate\Render\ViewFactory;
 use CommonDoc\View\PageContext;
 use CommonDocTest\Aggregate\Support\Config;
+use CommonDocTest\Aggregate\Support\MarkerDocumentRenderer;
 use Laminas\View\Renderer\PhpRenderer;
+use League\CommonMark\Environment\EnvironmentInterface;
+use League\CommonMark\Node\Block\Document;
 use League\CommonMark\Parser\MarkdownParser;
 use League\CommonMark\Renderer\HtmlRenderer;
 use Mezzio\Template\TemplateRendererInterface;
@@ -34,6 +37,21 @@ use PHPUnit\Framework\TestCase;
 #[CoversMethod(ViewFactory::class, 'renderer')]
 final class ViewFactoryTest extends TestCase
 {
+    #[Test]
+    public function anEmptyNameDoesNotStopTheEntriesAfterItBeingResolved(): void
+    {
+        $map = new ViewFactory()->map(config: Config::site(
+            templateMap: [
+                ''                  => '/srv/ignored.phtml',
+                'aggregate::custom' => '/srv/custom.phtml',
+            ],
+        ));
+
+        static::assertArrayNotHasKey('', $map);
+        static::assertSame('/srv/custom.phtml', $map['aggregate::custom']);
+        static::assertCount(5, $map);
+    }
+
     #[Test]
     public function anEntryUnderAnEmptyNameIsNotAnAddressAndIsDropped(): void
     {
@@ -77,22 +95,44 @@ final class ViewFactoryTest extends TestCase
     }
 
     #[Test]
+    public function losesToADocumentRendererRegisteredAtAHigherPriority(): void
+    {
+        $environment = $this->environment();
+
+        $environment->addRenderer(
+            nodeClass: Document::class,
+            renderer : new MarkerDocumentRenderer(markup: '<!-- competitor -->'),
+            priority : 11,
+        );
+
+        $markup = $this->render(environment: $environment);
+
+        static::assertStringContainsString('<!-- competitor -->', $markup);
+        static::assertStringNotContainsString('<main class="document">', $markup);
+    }
+
+    #[Test]
+    public function outranksADocumentRendererRegisteredLaterAtTheSamePriority(): void
+    {
+        $environment = $this->environment();
+
+        $environment->addRenderer(
+            nodeClass: Document::class,
+            renderer : new MarkerDocumentRenderer(markup: '<!-- competitor -->'),
+            priority : 10,
+        );
+
+        $markup = $this->render(environment: $environment);
+
+        static::assertStringContainsString('<main class="document">', $markup);
+        static::assertStringNotContainsString('<!-- competitor -->', $markup);
+    }
+
+    #[Test]
     public function rendersADocumentThroughTheDocumentTemplate(): void
     {
-        $views       = new ViewFactory();
-        $templates   = $views->create(config: Config::site());
-        $environment = $views->environment(
-            templates: $templates,
-            pages    : new PageContext(),
-        );
-
-        $html = new HtmlRenderer(environment: $environment)->renderDocument(
-            document: new MarkdownParser(environment: $environment)->parse(
-                input: "# Title\n\nBody\n",
-            ),
-        );
-
-        $markup = (string) $html;
+        $environment = $this->environment();
+        $markup      = $this->render(environment: $environment);
 
         static::assertStringContainsString('<main class="document">', $markup);
         static::assertStringContainsString('<h1>Title</h1>', $markup);
@@ -128,5 +168,24 @@ final class ViewFactoryTest extends TestCase
     public function theDocumentAddressIsTheSharedOne(): void
     {
         static::assertSame('commondoc::document', ViewFactory::DOCUMENT);
+    }
+
+    private function environment(): EnvironmentInterface
+    {
+        $views = new ViewFactory();
+
+        return $views->environment(
+            templates: $views->create(config: Config::site()),
+            pages    : new PageContext(),
+        );
+    }
+
+    private function render(EnvironmentInterface $environment): string
+    {
+        return (string) new HtmlRenderer(environment: $environment)->renderDocument(
+            document: new MarkdownParser(environment: $environment)->parse(
+                input: "# Title\n\nBody\n",
+            ),
+        );
     }
 }

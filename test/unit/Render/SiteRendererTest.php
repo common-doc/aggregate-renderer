@@ -16,11 +16,14 @@ namespace CommonDocTest\Aggregate\Render;
 
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Render\NotFoundPage;
+use CommonDoc\Aggregate\Render\PageAddressFactory;
 use CommonDoc\Aggregate\Render\SiteIndex;
 use CommonDoc\Aggregate\Render\SiteRenderer;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
+use CommonDoc\Aggregate\Render\ViewFactory;
 use CommonDoc\Aggregate\Source\SourceInterface;
 use CommonDoc\Aggregate\Version\Target;
 use CommonDocTest\Aggregate\Support\Config;
@@ -48,6 +51,35 @@ use function is_file;
 final class SiteRendererTest extends TestCase
 {
     private TemporaryDirectory $directory;
+
+    #[Test]
+    public function listsEveryVersionOfAProjectUnderOneEntry(): void
+    {
+        $index = new SiteIndex(
+            tree     : new OutputTree(root: $this->path('')),
+            addresses: new PageAddressFactory(hostname: 'docs.example.org'),
+            templates: new ViewFactory()->create(config: Config::site()),
+        );
+
+        static::assertSame(
+            [
+                [
+                    'name'     => 'aggregate-renderer',
+                    'versions' => [
+                        [
+                            'version' => '1.0',
+                            'address' => 'https://docs.example.org/aggregate-renderer/1.0/',
+                        ],
+                        [
+                            'version' => '1.1',
+                            'address' => 'https://docs.example.org/aggregate-renderer/1.1/',
+                        ],
+                    ],
+                ],
+            ],
+            $index->entries([$this->target(), $this->target(version: '1.1')]),
+        );
+    }
 
     #[Test]
     public function ordersTheResultsByAddress(): void

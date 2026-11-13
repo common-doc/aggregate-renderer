@@ -23,11 +23,14 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 use function bin2hex;
+use function file_put_contents;
 use function glob;
 use function is_dir;
 use function mkdir;
 use function random_bytes;
+use function restore_error_handler;
 use function rmdir;
+use function set_error_handler;
 use function sprintf;
 use function sys_get_temp_dir;
 use function unlink;
@@ -87,6 +90,32 @@ final class OutputTreeTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         new OutputTree(root: '.');
+    }
+
+    #[Test]
+    public function reportsAPageDirectoryThatCannotBeCreated(): void
+    {
+        static::assertNotFalse(file_put_contents(
+            filename: "{$this->directory}/blocked",
+            data    : 'not a directory',
+        ));
+
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            $this->tree()->write(
+                relativePath: 'blocked/page/index.html',
+                contents    : '<html></html>',
+            );
+        } catch (RuntimeException $failure) {
+            static::assertStringContainsString('cannot be created', $failure->getMessage());
+
+            return;
+        } finally {
+            restore_error_handler();
+        }
+
+        static::fail('A page directory that cannot be created is reported.');
     }
 
     #[Test]

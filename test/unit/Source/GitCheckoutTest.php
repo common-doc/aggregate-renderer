@@ -27,7 +27,11 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function file_put_contents;
+use function is_writable;
 use function mkdir;
+use function restore_error_handler;
+use function set_error_handler;
 use function sprintf;
 
 #[CoversClass(GitCheckout::class)]
@@ -66,6 +70,7 @@ final class GitCheckoutTest extends TestCase
 
         static::assertSame($expected, $checkout->directory($this->project()));
         static::assertDirectoryExists($expected);
+        static::assertTrue(is_writable($expected));
 
         static::assertSame(['init', '--quiet'], $runner->calls[0]['arguments']);
         static::assertSame(
@@ -122,6 +127,48 @@ final class GitCheckoutTest extends TestCase
         static::assertSame($site, $checkout->directory($this->project()));
         static::assertSame('remote', $runner->calls[0]['arguments'][0]);
         static::assertSame('set-url', $runner->calls[0]['arguments'][1]);
+    }
+
+    #[Test]
+    public function reportsACacheDirectoryThatCannotBeCreated(): void
+    {
+        $sources = sprintf('%s/sources', $this->temporary->path);
+
+        static::assertTrue(mkdir(
+            directory  : $sources,
+            permissions: 0o777,
+            recursive  : true,
+        ));
+        static::assertNotFalse(file_put_contents(
+            filename: sprintf('%s/aggregate-renderer', $sources),
+            data    : 'not a directory',
+        ));
+
+        $checkout = new GitCheckout(
+            runner        : new GitRunner(),
+            cacheDirectory: $this->temporary->path,
+        );
+
+        set_error_handler(static fn(): bool => true);
+
+        try {
+            $checkout->directory($this->project());
+        } catch (SourceUnavailable $failure) {
+            static::assertSame(ReasonCode::SourceUnavailable, $failure->reasonCode);
+            static::assertStringContainsString(
+                sprintf(
+                    'The cache directory "%s/sources/aggregate-renderer" could not be created.',
+                    $this->temporary->path,
+                ),
+                $failure->getMessage(),
+            );
+
+            return;
+        } finally {
+            restore_error_handler();
+        }
+
+        static::fail('A cache directory that cannot be created makes the source unavailable.');
     }
 
     #[Test]

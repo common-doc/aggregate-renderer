@@ -27,6 +27,7 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function count;
 use function implode;
 use function mkdir;
 use function sprintf;
@@ -66,6 +67,11 @@ final class GitCandidatesTest extends TestCase
         static::assertSame(
             ['1.0', '1.1'],
             $this->candidates($runner, Strategy::Tree)->names($this->project()),
+        );
+
+        static::assertSame(
+            ['ls-tree', '-d', '--name-only', 'refs/remotes/origin/main', '--', 'docs/'],
+            $runner->calls[count($runner->calls) - 1]['arguments'],
         );
     }
 
