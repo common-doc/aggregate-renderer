@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Version\Target;
 
 /**
@@ -34,7 +36,7 @@ interface SourceInterface
      *
      * @return list<non-empty-string> Names without a reference prefix, unordered and possibly duplicated
      *
-     * @throws SourceUnavailable When the candidates cannot be listed
+     * @throws SourceUnavailableException When the candidates cannot be listed
      */
     public function candidates(Project $project): array;
 
@@ -43,7 +45,7 @@ interface SourceInterface
      *
      * @param non-empty-string $documentPath A path previously returned by {@see self::documents()}
      *
-     * @throws SourceUnavailable When the document cannot be read
+     * @throws SourceUnavailableException When the document cannot be read
      */
     public function contents(Target $target, string $documentPath): string;
 
@@ -56,8 +58,8 @@ interface SourceInterface
      *
      * @return list<non-empty-string>
      *
-     * @throws SourceUnavailable      When the sources cannot be read
-     * @throws MissingDocDirectory    When the declared documentation directory is absent at the ref
+     * @throws SourceUnavailableException      When the sources cannot be read
+     * @throws MissingDocDirectoryException    When the declared documentation directory is absent at the ref
      */
     public function documents(Target $target): array;
 }

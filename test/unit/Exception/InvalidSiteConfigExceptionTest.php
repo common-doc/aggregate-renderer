@@ -12,23 +12,23 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDocTest\Aggregate\Config;
+namespace CommonDocTest\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
-use CommonDoc\Aggregate\Config\InvalidSiteConfig;
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-#[CoversClass(InvalidSiteConfig::class)]
-#[CoversMethod(InvalidSiteConfig::class, 'at')]
-final class InvalidSiteConfigTest extends TestCase
+#[CoversClass(InvalidSiteConfigException::class)]
+#[CoversMethod(InvalidSiteConfigException::class, 'at')]
+final class InvalidSiteConfigExceptionTest extends TestCase
 {
-    private static function config(): InvalidSiteConfig
+    private static function config(): InvalidSiteConfigException
     {
-        return InvalidSiteConfig::at(
+        return InvalidSiteConfigException::at(
             key   : 'organization',
             reason: 'it must be a non-empty string.',
         );

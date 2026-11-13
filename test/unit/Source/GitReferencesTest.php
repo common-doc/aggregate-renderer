@@ -16,9 +16,9 @@ namespace CommonDocTest\Aggregate\Source;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Source\GitCheckout;
 use CommonDoc\Aggregate\Source\GitReferences;
-use CommonDoc\Aggregate\Source\SourceUnavailable;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\Target;
 use CommonDocTest\Aggregate\Support\GitRunner;
@@ -121,7 +121,7 @@ final class GitReferencesTest extends TestCase
 
         try {
             $this->references($runner)->defaultRef($this->project());
-        } catch (SourceUnavailable $failure) {
+        } catch (SourceUnavailableException $failure) {
             static::assertSame(ReasonCode::SourceUnavailable, $failure->reasonCode);
 
             return;
@@ -137,7 +137,7 @@ final class GitReferencesTest extends TestCase
 
         try {
             $this->references($runner)->defaultRef($this->project());
-        } catch (SourceUnavailable $failure) {
+        } catch (SourceUnavailableException $failure) {
             static::assertSame(ReasonCode::SourceUnavailable, $failure->reasonCode);
 
             return;

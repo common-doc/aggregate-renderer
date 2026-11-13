@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Output;
 
+use CommonDoc\Aggregate\Exception\MissingCnameException;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -87,12 +88,12 @@ final readonly class CnameFile
     /**
      * @throws InvalidArgumentException When the tree refuses the file name
      * @throws RuntimeException         When the file cannot be read
-     * @throws MissingCname            When the file is absent or does not hold the configured hostname
+     * @throws MissingCnameException            When the file is absent or does not hold the configured hostname
      */
     public function verify(): void
     {
         if (! $this->tree->exists(relativePath: self::NAME)) {
-            throw MissingCname::absent();
+            throw MissingCnameException::absent();
         }
 
         $actual = $this->tree->read(relativePath: self::NAME);
@@ -103,7 +104,7 @@ final readonly class CnameFile
                 characters: self::TRAILING,
             ) !== $this->hostname
         ) {
-            throw MissingCname::mismatched(
+            throw MissingCnameException::mismatched(
                 expected: $this->hostname,
                 actual  : $actual,
             );

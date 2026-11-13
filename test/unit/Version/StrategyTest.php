@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Version;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
-use CommonDoc\Aggregate\Config\InvalidSiteConfig;
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use CommonDoc\Aggregate\Version\Strategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -52,7 +52,7 @@ final class StrategyTest extends TestCase
             Strategy::fromConfig('Tree');
 
             static::fail('A value outside the two members must not be accepted.');
-        } catch (InvalidSiteConfig $exception) {
+        } catch (InvalidSiteConfigException $exception) {
             static::assertSame('versions.strategy', $exception->key);
             static::assertSame(ReasonCode::InvalidSiteConfig, $exception->reasonCode);
         }
@@ -61,7 +61,7 @@ final class StrategyTest extends TestCase
     #[Test]
     public function rejectsAValueThatNamesNoMember(): void
     {
-        $this->expectException(InvalidSiteConfig::class);
+        $this->expectException(InvalidSiteConfigException::class);
         $this->expectExceptionMessage(
             'Invalid site configuration at "versions.strategy": "git" is not one of "ref" or "tree".',
         );

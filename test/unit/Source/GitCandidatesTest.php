@@ -15,10 +15,10 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
 use CommonDoc\Aggregate\Source\GitCandidates;
 use CommonDoc\Aggregate\Source\GitCheckout;
 use CommonDoc\Aggregate\Source\GitReferences;
-use CommonDoc\Aggregate\Source\MissingDocDirectory;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDocTest\Aggregate\Support\GitRunner;
 use CommonDocTest\Aggregate\Support\TemporaryDirectory;
@@ -80,7 +80,7 @@ final class GitCandidatesTest extends TestCase
     {
         $runner = $this->runner()->returning("ref: refs/heads/main\tHEAD\n")->returning('');
 
-        $this->expectException(MissingDocDirectory::class);
+        $this->expectException(MissingDocDirectoryException::class);
 
         $this->candidates($runner, Strategy::Tree)->names($this->project());
     }

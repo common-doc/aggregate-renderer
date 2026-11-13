@@ -12,9 +12,9 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDocTest\Aggregate\Source;
+namespace CommonDocTest\Aggregate\Exception;
 
-use CommonDoc\Aggregate\Source\GitFailure;
+use CommonDoc\Aggregate\Exception\GitFailureException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,15 +24,15 @@ use function str_contains;
 use function str_repeat;
 use function strlen;
 
-#[CoversClass(GitFailure::class)]
-#[CoversMethod(GitFailure::class, 'didNotRun')]
-#[CoversMethod(GitFailure::class, 'failed')]
-final class GitFailureTest extends TestCase
+#[CoversClass(GitFailureException::class)]
+#[CoversMethod(GitFailureException::class, 'didNotRun')]
+#[CoversMethod(GitFailureException::class, 'failed')]
+final class GitFailureExceptionTest extends TestCase
 {
     #[Test]
     public function namesTheArgumentsAndTheExitCodeOfAFailedCommand(): void
     {
-        $failure = GitFailure::failed(
+        $failure = GitFailureException::failed(
             arguments : ['ls-remote', '--heads', 'https://example.test/repository.git'],
             exitCode  : 128,
             diagnostic: "fatal: repository not found\n",
@@ -49,7 +49,7 @@ final class GitFailureTest extends TestCase
     #[Test]
     public function reportsACommandThatNeverRanWithoutAnExitCode(): void
     {
-        $failure = GitFailure::didNotRun(
+        $failure = GitFailureException::didNotRun(
             arguments : ['init'],
             diagnostic: 'the binary is absent',
         );
@@ -61,7 +61,7 @@ final class GitFailureTest extends TestCase
     #[Test]
     public function saysSoWhenTheCommandReportedNoDiagnostic(): void
     {
-        $failure = GitFailure::failed(
+        $failure = GitFailureException::failed(
             arguments : ['fetch'],
             exitCode  : 1,
             diagnostic: "  \n",
@@ -73,7 +73,7 @@ final class GitFailureTest extends TestCase
     #[Test]
     public function truncatesADiagnosticThatWouldSwampTheReport(): void
     {
-        $failure = GitFailure::failed(
+        $failure = GitFailureException::failed(
             arguments : ['fetch'],
             exitCode  : 1,
             diagnostic: str_repeat(

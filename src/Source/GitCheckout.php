@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\GitFailureException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use InvalidArgumentException;
 
 use function array_key_exists;
@@ -65,7 +67,7 @@ final class GitCheckout
     }
 
     /**
-     * @throws SourceUnavailable When the checkout cannot be prepared
+     * @throws SourceUnavailableException When the checkout cannot be prepared
      */
     public function directory(Project $project): string
     {
@@ -105,7 +107,7 @@ final class GitCheckout
      *
      * @param list<non-empty-string> $arguments
      *
-     * @throws SourceUnavailable When git cannot be started or exits with a non-zero code
+     * @throws SourceUnavailableException When git cannot be started or exits with a non-zero code
      */
     public function run(Project $project, string $directory, array $arguments): string
     {
@@ -114,8 +116,8 @@ final class GitCheckout
                 arguments       : $arguments,
                 workingDirectory: $directory,
             );
-        } catch (GitFailure $failure) {
-            throw SourceUnavailable::for(
+        } catch (GitFailureException $failure) {
+            throw SourceUnavailableException::for(
                 project : $project,
                 reason  : $failure->getMessage(),
                 previous: $failure,
@@ -140,7 +142,7 @@ final class GitCheckout
     }
 
     /**
-     * @throws SourceUnavailable When the cache directory cannot be created
+     * @throws SourceUnavailableException When the cache directory cannot be created
      */
     private function create(Project $project, string $directory): void
     {
@@ -153,7 +155,7 @@ final class GitCheckout
             )
             && ! is_dir($directory)
         ) {
-            throw SourceUnavailable::for(
+            throw SourceUnavailableException::for(
                 project: $project,
                 reason: sprintf('The cache directory "%s" could not be created.', $directory),
             );
@@ -177,7 +179,7 @@ final class GitCheckout
     }
 
     /**
-     * @throws SourceUnavailable When the remote cannot be repointed
+     * @throws SourceUnavailableException When the remote cannot be repointed
      */
     private function update(Project $project, string $directory): void
     {

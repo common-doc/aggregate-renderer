@@ -16,9 +16,9 @@ namespace CommonDoc\Aggregate\Console;
 
 use CommonDoc\Aggregate\Build\BuildReport;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
-use CommonDoc\Aggregate\Config\InvalidSiteConfig;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
-use CommonDoc\Aggregate\Output\MissingCname;
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
+use CommonDoc\Aggregate\Exception\MissingCnameException;
 use CommonDoc\Aggregate\Report\ReportFile;
 use CommonDoc\Aggregate\Report\ReportFileFactoryInterface;
 use InvalidArgumentException;
@@ -90,7 +90,7 @@ final class BuildCommand extends Command
      * @throws ExceptionInterface When an option cannot be read
      * @throws InvalidArgumentException When the report path or the report itself is refused
      * @throws JsonException When the report cannot be encoded as JSON
-     * @throws MissingCname When the site address file does not hold the configured hostname
+     * @throws MissingCnameException When the site address file does not hold the configured hostname
      * @throws RuntimeException            When the output tree or the report cannot be written
      * @throws AlreadyInitializedException When the markdown environment has already been configured
      * @throws TemplateExceptionInterface  When a page cannot be rendered
@@ -106,7 +106,7 @@ final class BuildCommand extends Command
 
         try {
             $config = $this->reader->read($path);
-        } catch (InvalidSiteConfig $invalid) {
+        } catch (InvalidSiteConfigException $invalid) {
             $this->errorsOf($output)->writeln(sprintf('<error>%s</error>', $invalid->getMessage()));
 
             return self::EXIT_BLOCKED;

@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Version;
 
-use CommonDoc\Aggregate\Config\InvalidSiteConfig;
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 
 use function sprintf;
 
@@ -38,12 +38,12 @@ enum Strategy: string
     }
 
     /**
-     * @throws InvalidSiteConfig When the configured value names no member
+     * @throws InvalidSiteConfigException When the configured value names no member
      */
     public static function fromConfig(string $configured): self
     {
         return (
-            self::tryFrom($configured) ?? throw InvalidSiteConfig::at(
+            self::tryFrom($configured) ?? throw InvalidSiteConfigException::at(
                 'versions.strategy',
                 sprintf('"%s" is not one of "ref" or "tree".', $configured),
             )

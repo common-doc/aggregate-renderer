@@ -15,8 +15,8 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Output;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
+use CommonDoc\Aggregate\Exception\MissingCnameException;
 use CommonDoc\Aggregate\Output\CnameFile;
-use CommonDoc\Aggregate\Output\MissingCname;
 use CommonDoc\Aggregate\Output\OutputTree;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -37,7 +37,7 @@ use function unlink;
 use const DIRECTORY_SEPARATOR;
 
 #[CoversClass(CnameFile::class)]
-#[CoversClass(MissingCname::class)]
+#[CoversClass(MissingCnameException::class)]
 #[CoversMethod(CnameFile::class, '__construct')]
 #[CoversMethod(CnameFile::class, 'contents')]
 #[CoversMethod(CnameFile::class, 'hostname')]
@@ -89,7 +89,7 @@ final class CnameFileTest extends TestCase
 
         try {
             $this->cname(hostname: 'docs.example.org')->verify();
-        } catch (MissingCname $missing) {
+        } catch (MissingCnameException $missing) {
             static::assertSame(ReasonCode::MissingCname, $missing->reasonCode);
             static::assertStringContainsString('other.example.org', $missing->getMessage());
 
@@ -106,7 +106,7 @@ final class CnameFileTest extends TestCase
 
         try {
             $this->cname(hostname: 'docs.example.org')->verify();
-        } catch (MissingCname $missing) {
+        } catch (MissingCnameException $missing) {
             static::assertSame(ReasonCode::MissingCname, $missing->reasonCode);
             static::assertStringContainsString('is absent', $missing->getMessage());
 

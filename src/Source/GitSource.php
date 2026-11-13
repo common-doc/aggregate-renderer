@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Version\Target;
 use Override;
 
@@ -35,8 +37,8 @@ final readonly class GitSource implements SourceInterface
     /**
      * @return list<non-empty-string>
      *
-     * @throws SourceUnavailable   When the candidates cannot be listed
-     * @throws MissingDocDirectory When the documentation directory is absent at the default branch
+     * @throws SourceUnavailableException   When the candidates cannot be listed
+     * @throws MissingDocDirectoryException When the documentation directory is absent at the default branch
      */
     #[Override]
     public function candidates(Project $project): array
@@ -45,7 +47,7 @@ final readonly class GitSource implements SourceInterface
     }
 
     /**
-     * @throws SourceUnavailable When the document cannot be read
+     * @throws SourceUnavailableException When the document cannot be read
      */
     #[Override]
     public function contents(Target $target, string $documentPath): string
@@ -59,8 +61,8 @@ final readonly class GitSource implements SourceInterface
     /**
      * @return list<non-empty-string>
      *
-     * @throws SourceUnavailable   When the sources cannot be read
-     * @throws MissingDocDirectory When the declared documentation directory is absent at the ref
+     * @throws SourceUnavailableException   When the sources cannot be read
+     * @throws MissingDocDirectoryException When the declared documentation directory is absent at the ref
      */
     #[Override]
     public function documents(Target $target): array

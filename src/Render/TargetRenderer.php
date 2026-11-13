@@ -17,9 +17,10 @@ namespace CommonDoc\Aggregate\Render;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ReasonCode;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
+use CommonDoc\Aggregate\Exception\UnaddressableDocumentException;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Source\SourceInterface;
-use CommonDoc\Aggregate\Source\SourceUnavailable;
 use CommonDoc\Aggregate\Version\Target;
 use CommonDoc\View\Page;
 use CommonDoc\View\PageContext;
@@ -165,7 +166,7 @@ final readonly class TargetRenderer
             foreach ($addresses as $documentPath => $address) {
                 $prepared[] = [$documentPath, $address, $this->source->contents($target, $documentPath)];
             }
-        } catch (SourceUnavailable|UnaddressableDocument) {
+        } catch (SourceUnavailableException|UnaddressableDocumentException) {
             return self::failed($documents);
         }
 
@@ -195,7 +196,7 @@ final readonly class TargetRenderer
      *
      * @return array<non-empty-string, PageAddress>
      *
-     * @throws UnaddressableDocument When one document cannot name a page
+     * @throws UnaddressableDocumentException When one document cannot name a page
      */
     private function addressesOf(Target $target, array $documents): array
     {
@@ -208,7 +209,7 @@ final readonly class TargetRenderer
                     documentPath: $documentPath,
                 );
             } catch (InvalidArgumentException) {
-                throw UnaddressableDocument::at($target, $documentPath);
+                throw UnaddressableDocumentException::at($target, $documentPath);
             }
         }
 

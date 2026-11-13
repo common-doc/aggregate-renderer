@@ -16,9 +16,9 @@ namespace CommonDocTest\Aggregate\Source;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\GitFailureException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Source\GitCheckout;
-use CommonDoc\Aggregate\Source\GitFailure;
-use CommonDoc\Aggregate\Source\SourceUnavailable;
 use CommonDocTest\Aggregate\Support\GitRunner;
 use CommonDocTest\Aggregate\Support\TemporaryDirectory;
 use InvalidArgumentException;
@@ -153,7 +153,7 @@ final class GitCheckoutTest extends TestCase
 
         try {
             $checkout->directory($this->project());
-        } catch (SourceUnavailable $failure) {
+        } catch (SourceUnavailableException $failure) {
             static::assertSame(ReasonCode::SourceUnavailable, $failure->reasonCode);
             static::assertStringContainsString(
                 sprintf(
@@ -175,7 +175,7 @@ final class GitCheckoutTest extends TestCase
     public function reportsAFailedCommandAsAnUnavailableSource(): void
     {
         $runner = new GitRunner();
-        $runner->failing(GitFailure::failed(
+        $runner->failing(GitFailureException::failed(
             arguments : ['init', '--quiet'],
             exitCode  : 128,
             diagnostic: 'boom',
@@ -188,7 +188,7 @@ final class GitCheckoutTest extends TestCase
 
         try {
             $checkout->directory($this->project());
-        } catch (SourceUnavailable $failure) {
+        } catch (SourceUnavailableException $failure) {
             static::assertSame(ReasonCode::SourceUnavailable, $failure->reasonCode);
 
             return;

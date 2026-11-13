@@ -15,8 +15,8 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Config;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
-use CommonDoc\Aggregate\Config\InvalidSiteConfig;
 use CommonDoc\Aggregate\Config\Section;
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -160,7 +160,7 @@ final class SectionTest extends TestCase
     {
         try {
             $action();
-        } catch (InvalidSiteConfig $exception) {
+        } catch (InvalidSiteConfigException $exception) {
             static::assertSame($key, $exception->key);
             static::assertSame(ReasonCode::InvalidSiteConfig, $exception->reasonCode);
 

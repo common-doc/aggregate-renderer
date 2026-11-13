@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Source;
+namespace CommonDoc\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Discovery\Project;
@@ -27,7 +27,7 @@ use function sprintf;
  * The reason code travels with the exception so the report and the process exit code cannot disagree
  * about why the project was skipped.
  */
-final class SourceUnavailable extends RuntimeException
+final class SourceUnavailableException extends RuntimeException
 {
     private function __construct(
         public readonly ReasonCode $reasonCode,

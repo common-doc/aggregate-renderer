@@ -15,10 +15,10 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
 use CommonDoc\Aggregate\Source\GitCheckout;
 use CommonDoc\Aggregate\Source\GitDocuments;
 use CommonDoc\Aggregate\Source\GitReferences;
-use CommonDoc\Aggregate\Source\MissingDocDirectory;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\Target;
 use CommonDocTest\Aggregate\Support\GitRunner;
@@ -93,7 +93,7 @@ final class GitDocumentsTest extends TestCase
     #[Test]
     public function reportsATargetWithoutDocuments(): void
     {
-        $this->expectException(MissingDocDirectory::class);
+        $this->expectException(MissingDocDirectoryException::class);
 
         $this->documents($this->runner()->returning(''), Strategy::Ref)->paths($this->target('1.0'));
     }

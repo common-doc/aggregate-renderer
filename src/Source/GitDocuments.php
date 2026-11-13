@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Source;
 
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\Target;
 
@@ -36,7 +38,7 @@ final class GitDocuments
     /**
      * @param non-empty-string $documentPath A path previously returned by {@see self::paths()}
      *
-     * @throws SourceUnavailable When the document cannot be read
+     * @throws SourceUnavailableException When the document cannot be read
      */
     public function contents(Target $target, string $documentPath): string
     {
@@ -64,8 +66,8 @@ final class GitDocuments
     /**
      * @return list<non-empty-string> Paths relative to the target's source root
      *
-     * @throws SourceUnavailable   When the tree cannot be listed
-     * @throws MissingDocDirectory When the source root is absent at the ref
+     * @throws SourceUnavailableException   When the tree cannot be listed
+     * @throws MissingDocDirectoryException When the source root is absent at the ref
      */
     public function paths(Target $target): array
     {
@@ -95,7 +97,7 @@ final class GitDocuments
         $paths = TreeOutput::documents(TreeOutput::paths($listing, $root));
 
         if ([] === $paths) {
-            throw MissingDocDirectory::at($project, $ref);
+            throw MissingDocDirectoryException::at($project, $ref);
         }
 
         return $paths;

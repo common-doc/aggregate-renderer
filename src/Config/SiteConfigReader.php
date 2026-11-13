@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Config;
 
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use CommonDoc\Aggregate\Version\Strategy;
 use JsonException;
 
@@ -48,7 +49,7 @@ final class SiteConfigReader
     private const string CACHE_DIRECTORY_DEFAULT = '.cache/multi-repo';
 
     /**
-     * @throws InvalidSiteConfig When the file cannot be read or does not satisfy the schema
+     * @throws InvalidSiteConfigException When the file cannot be read or does not satisfy the schema
      */
     public function read(string $path): SiteConfig
     {
@@ -96,21 +97,21 @@ final class SiteConfigReader
     /**
      * @return array<array-key, mixed>
      *
-     * @throws InvalidSiteConfig When the file cannot be read or does not hold JSON
+     * @throws InvalidSiteConfigException When the file cannot be read or does not hold JSON
      */
     private function decode(string $path): array
     {
         $contents = is_readable($path) ? file_get_contents($path) : false;
 
         if (false === $contents) {
-            throw InvalidSiteConfig::at('site.json', sprintf('"%s" cannot be read.', $path));
+            throw InvalidSiteConfigException::at('site.json', sprintf('"%s" cannot be read.', $path));
         }
 
         try {
             /** @var mixed $decoded */
             $decoded = json_decode($contents, associative: true, depth: 512, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $exception) {
-            throw InvalidSiteConfig::at('site.json', sprintf(
+            throw InvalidSiteConfigException::at('site.json', sprintf(
                 '"%s" is not valid JSON: %s',
                 $path,
                 $exception->getMessage(),
@@ -118,7 +119,7 @@ final class SiteConfigReader
         }
 
         if (! is_array($decoded)) {
-            throw InvalidSiteConfig::at('site.json', 'the file does not hold a JSON object.');
+            throw InvalidSiteConfigException::at('site.json', 'the file does not hold a JSON object.');
         }
 
         return $decoded;
@@ -129,12 +130,12 @@ final class SiteConfigReader
      *
      * @return non-empty-string
      *
-     * @throws InvalidSiteConfig When the value is not a bare host name
+     * @throws InvalidSiteConfigException When the value is not a bare host name
      */
     private function hostname(string $configured): string
     {
         if (preg_match(self::HOSTNAME_PATTERN, $configured) !== 1) {
-            throw InvalidSiteConfig::at(
+            throw InvalidSiteConfigException::at(
                 'site.hostname',
                 sprintf('"%s" is not a bare host name without a scheme or a slash.', $configured),
             );
@@ -153,7 +154,7 @@ final class SiteConfigReader
     }
 
     /**
-     * @throws InvalidSiteConfig When the configured strategy is not a member
+     * @throws InvalidSiteConfigException When the configured strategy is not a member
      */
     private function strategy(Section $root): Strategy
     {
@@ -173,7 +174,7 @@ final class SiteConfigReader
     /**
      * @return array<string, non-empty-string>
      *
-     * @throws InvalidSiteConfig When a mapped template is not a readable file
+     * @throws InvalidSiteConfigException When a mapped template is not a readable file
      */
     private function templateMap(Section $root, string $base): array
     {
@@ -198,7 +199,7 @@ final class SiteConfigReader
             $resolved     = $this->resolved($templatePath, $base);
 
             if (! is_file($resolved) || ! is_readable($resolved)) {
-                throw InvalidSiteConfig::at(
+                throw InvalidSiteConfigException::at(
                     $map->pathFor($name),
                     sprintf('"%s" is not a readable file.', $resolved),
                 );
@@ -215,12 +216,12 @@ final class SiteConfigReader
      *
      * @return non-empty-string
      *
-     * @throws InvalidSiteConfig When the value is not an environment variable name
+     * @throws InvalidSiteConfigException When the value is not an environment variable name
      */
     private function tokenVariable(string $configured): string
     {
         if (preg_match(self::TOKEN_ENV_VAR_PATTERN, $configured) !== 1) {
-            throw InvalidSiteConfig::at(
+            throw InvalidSiteConfigException::at(
                 'organization.tokenEnvVar',
                 sprintf('"%s" is not an environment variable name.', $configured),
             );

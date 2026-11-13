@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Source;
 
+use CommonDoc\Aggregate\Exception\GitFailureException;
+
 /**
  * The process seam every git read passes through.
  *
@@ -31,7 +33,7 @@ interface GitRunnerInterface
      * @param string                 $workingDirectory A directory the caller has resolved or created
      * @param array<string, string>  $environment      Added to the environment of this invocation only
      *
-     * @throws GitFailure When the command cannot be run or exits with a non-zero code
+     * @throws GitFailureException When the command cannot be run or exits with a non-zero code
      */
     public function run(array $arguments, string $workingDirectory, array $environment = []): string;
 }

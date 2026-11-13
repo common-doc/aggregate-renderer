@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Version\Strategy;
 
 use function sprintf;
@@ -37,8 +39,8 @@ final class GitCandidates
     /**
      * @return list<non-empty-string>
      *
-     * @throws SourceUnavailable   When the candidates cannot be listed
-     * @throws MissingDocDirectory When the documentation directory is absent at the default branch
+     * @throws SourceUnavailableException   When the candidates cannot be listed
+     * @throws MissingDocDirectoryException When the documentation directory is absent at the default branch
      */
     public function names(Project $project): array
     {
@@ -50,8 +52,8 @@ final class GitCandidates
     /**
      * @return list<non-empty-string>
      *
-     * @throws SourceUnavailable   When the default branch cannot be listed
-     * @throws MissingDocDirectory When the documentation directory is absent at the default branch
+     * @throws SourceUnavailableException   When the default branch cannot be listed
+     * @throws MissingDocDirectoryException When the documentation directory is absent at the default branch
      */
     private function directoryNames(Project $project): array
     {
@@ -74,7 +76,7 @@ final class GitCandidates
         $names = TreeOutput::directories(TreeOutput::paths($listing, $root));
 
         if ([] === $names) {
-            throw MissingDocDirectory::at($project, $ref);
+            throw MissingDocDirectoryException::at($project, $ref);
         }
 
         return $names;
@@ -83,7 +85,7 @@ final class GitCandidates
     /**
      * @return list<non-empty-string>
      *
-     * @throws SourceUnavailable When the remote cannot be listed
+     * @throws SourceUnavailableException When the remote cannot be listed
      */
     private function referenceNames(Project $project): array
     {
