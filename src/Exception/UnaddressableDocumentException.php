@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Render;
+namespace CommonDoc\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Version\Target;
@@ -31,7 +31,7 @@ use function sprintf;
  * The reason code is carried rather than assumed by the caller, so the report cannot disagree with
  * what happened.
  */
-final class UnaddressableDocument extends RuntimeException
+final class UnaddressableDocumentException extends RuntimeException
 {
     private function __construct(
         public readonly ReasonCode $reasonCode,

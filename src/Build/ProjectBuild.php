@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Build;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
-use CommonDoc\Aggregate\Source\MissingDocDirectory;
 use CommonDoc\Aggregate\Source\SourceInterface;
-use CommonDoc\Aggregate\Source\SourceUnavailable;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\StrategyFactory;
 use CommonDoc\Aggregate\Version\Target;
@@ -43,7 +43,7 @@ final readonly class ProjectBuild
             $targets = $this->strategies
                 ->create($strategy, $project)
                 ->resolve($this->source->candidates($project));
-        } catch (SourceUnavailable $sourceUnavailable) {
+        } catch (SourceUnavailableException $sourceUnavailable) {
             return ProjectOutcome::failed($project, $sourceUnavailable->reasonCode);
         }
 
@@ -68,7 +68,7 @@ final readonly class ProjectBuild
         foreach ($targets as $target) {
             try {
                 $documents = $this->source->documents($target);
-            } catch (MissingDocDirectory|SourceUnavailable $unavailable) {
+            } catch (MissingDocDirectoryException|SourceUnavailableException $unavailable) {
                 $reasons[] = $unavailable->reasonCode;
 
                 continue;

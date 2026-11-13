@@ -21,9 +21,9 @@ use CommonDoc\Aggregate\Build\SiteBuild;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
-use CommonDoc\Aggregate\Source\MissingDocDirectory;
+use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Source\SourceInterface;
-use CommonDoc\Aggregate\Source\SourceUnavailable;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\StrategyFactory;
 use CommonDoc\Aggregate\Version\Target;
@@ -379,7 +379,7 @@ final class SiteBuildTest extends TestCase
             ->willReturnCallback(
                 static function (Project $project) use ($candidates, $unavailable): array {
                     if (in_array($project->sitePath, $unavailable, strict: true)) {
-                        throw SourceUnavailable::for($project, 'the repository is unreachable');
+                        throw SourceUnavailableException::for($project, 'the repository is unreachable');
                     }
 
                     return $candidates[$project->sitePath] ?? [];
@@ -391,11 +391,11 @@ final class SiteBuildTest extends TestCase
             ->willReturnCallback(
                 static function (Target $target) use ($unavailable, $missing): array {
                     if (in_array($target->project->sitePath, $unavailable, strict: true)) {
-                        throw SourceUnavailable::for($target->project, 'the repository is unreachable');
+                        throw SourceUnavailableException::for($target->project, 'the repository is unreachable');
                     }
 
                     if (in_array($target->version, $missing, strict: true)) {
-                        throw MissingDocDirectory::at($target->project, $target->version);
+                        throw MissingDocDirectoryException::at($target->project, $target->version);
                     }
 
                     return ['index.md'];

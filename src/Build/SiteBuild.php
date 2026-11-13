@@ -7,8 +7,8 @@ namespace CommonDoc\Aggregate\Build;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Exception\MissingCnameException;
 use CommonDoc\Aggregate\Output\CnameFile;
-use CommonDoc\Aggregate\Output\MissingCname;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
 use CommonDoc\Aggregate\Report\ReportFile;
@@ -46,7 +46,7 @@ final readonly class SiteBuild
      *
      * @throws InvalidArgumentException When the output tree, the totals or the report path refuse the build
      * @throws JsonException            When the report cannot be encoded
-     * @throws MissingCname            When the site address file does not hold the configured hostname
+     * @throws MissingCnameException            When the site address file does not hold the configured hostname
      * @throws RuntimeException            When the output tree or the report cannot be written
      * @throws TemplateExceptionInterface  When a page cannot be rendered
      */

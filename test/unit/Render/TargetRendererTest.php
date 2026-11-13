@@ -17,12 +17,12 @@ namespace CommonDocTest\Aggregate\Render;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\UnaddressableDocumentException;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Render\DocumentReader;
 use CommonDoc\Aggregate\Render\DocumentRenderer;
 use CommonDoc\Aggregate\Render\PageAddressFactory;
 use CommonDoc\Aggregate\Render\TargetRenderer;
-use CommonDoc\Aggregate\Render\UnaddressableDocument;
 use CommonDoc\Aggregate\Render\ViewFactory;
 use CommonDoc\Aggregate\Source\SourceInterface;
 use CommonDoc\Aggregate\Version\Target;
@@ -45,11 +45,11 @@ use RuntimeException;
 use function is_file;
 
 #[CoversClass(TargetRenderer::class)]
-#[CoversClass(UnaddressableDocument::class)]
+#[CoversClass(UnaddressableDocumentException::class)]
 #[CoversClass(DocumentReader::class)]
 #[CoversMethod(TargetRenderer::class, '__construct')]
 #[CoversMethod(TargetRenderer::class, 'render')]
-#[CoversMethod(UnaddressableDocument::class, 'at')]
+#[CoversMethod(UnaddressableDocumentException::class, 'at')]
 #[CoversMethod(DocumentReader::class, 'read')]
 final class TargetRendererTest extends TestCase
 {
@@ -264,7 +264,7 @@ final class TargetRendererTest extends TestCase
     #[Test]
     public function theExceptionNamesTheVersionAndTheDocumentThatCouldNotBeAddressed(): void
     {
-        $exception = UnaddressableDocument::at($this->target(), '../escape.md');
+        $exception = UnaddressableDocumentException::at($this->target(), '../escape.md');
 
         static::assertSame(ReasonCode::RenderFailed, $exception->reasonCode);
         static::assertStringContainsString('2.0', $exception->getMessage());

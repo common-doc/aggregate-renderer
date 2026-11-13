@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\Target;
 
@@ -48,7 +49,7 @@ final class GitReferences
     /**
      * @return non-empty-string
      *
-     * @throws SourceUnavailable When the default branch cannot be determined
+     * @throws SourceUnavailableException When the default branch cannot be determined
      */
     public function defaultRef(Project $project): string
     {
@@ -84,7 +85,7 @@ final class GitReferences
             return $this->defaults[$project->sitePath] = sprintf('%s%s', self::REMOTE, $branch);
         }
 
-        throw SourceUnavailable::for(
+        throw SourceUnavailableException::for(
             project: $project,
             reason: sprintf('The default branch of "%s" could not be determined.', $project->sitePath),
         );
@@ -93,7 +94,7 @@ final class GitReferences
     /**
      * @return non-empty-string
      *
-     * @throws SourceUnavailable When a tree corpus needs the default branch and it is unavailable
+     * @throws SourceUnavailableException When a tree corpus needs the default branch and it is unavailable
      */
     public function refFor(Target $target, Strategy $strategy): string
     {

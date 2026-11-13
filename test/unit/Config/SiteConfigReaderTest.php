@@ -15,9 +15,9 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Config;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
-use CommonDoc\Aggregate\Config\InvalidSiteConfig;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use CommonDoc\Aggregate\Version\Strategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -318,7 +318,7 @@ final class SiteConfigReaderTest extends TestCase
     {
         try {
             $action();
-        } catch (InvalidSiteConfig $exception) {
+        } catch (InvalidSiteConfigException $exception) {
             static::assertSame($key, $exception->key);
             static::assertSame(ReasonCode::InvalidSiteConfig, $exception->reasonCode);
 

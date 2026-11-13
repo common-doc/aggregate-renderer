@@ -12,9 +12,10 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Output;
+namespace CommonDoc\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
+use CommonDoc\Aggregate\Output\CnameFile;
 use RuntimeException;
 
 use function sprintf;
@@ -27,7 +28,7 @@ use function sprintf;
  * travels with the exception so the report and the process exit code cannot disagree about why the
  * build stopped.
  */
-final class MissingCname extends RuntimeException
+final class MissingCnameException extends RuntimeException
 {
     private function __construct(
         public readonly ReasonCode $reasonCode,

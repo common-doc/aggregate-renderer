@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Source;
+namespace CommonDoc\Aggregate\Exception;
 
 use RuntimeException;
 
@@ -28,7 +28,7 @@ use function substr;
  * where a credential would travel. Diagnostics are trimmed and truncated so a remote that echoes a
  * long page cannot turn a failure into an unreadable report.
  */
-final class GitFailure extends RuntimeException
+final class GitFailureException extends RuntimeException
 {
     private const int DIAGNOSTIC_LIMIT = 400;
 

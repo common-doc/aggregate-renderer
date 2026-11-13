@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Config;
+namespace CommonDoc\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use RuntimeException;
@@ -27,7 +27,7 @@ use function sprintf;
  * has to deduce the vocabulary from the message. Configuration is read before anything is rendered,
  * so this always exits blocked and never produces a report.
  */
-final class InvalidSiteConfig extends RuntimeException
+final class InvalidSiteConfigException extends RuntimeException
 {
     private function __construct(
         public readonly string $key,

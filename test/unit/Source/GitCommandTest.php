@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Source;
 
+use CommonDoc\Aggregate\Exception\GitFailureException;
 use CommonDoc\Aggregate\Source\GitCommand;
-use CommonDoc\Aggregate\Source\GitFailure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -66,7 +66,7 @@ final class GitCommandTest extends TestCase
             );
 
             static::fail('A binary that does not exist must not produce an answer.');
-        } catch (GitFailure $failure) {
+        } catch (GitFailureException $failure) {
             static::assertStringContainsString('The git command "git status"', $failure->getMessage());
             static::assertStringContainsString('git-command-that-does-not-exist', $failure->getMessage());
         }
@@ -75,7 +75,7 @@ final class GitCommandTest extends TestCase
     #[Test]
     public function reportsANonZeroExitAsAFailure(): void
     {
-        $this->expectException(GitFailure::class);
+        $this->expectException(GitFailureException::class);
         $this->expectExceptionMessageMatches('/exited with 3: .*the command failed/s');
 
         self::command()->run(

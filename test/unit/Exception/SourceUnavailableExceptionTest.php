@@ -12,36 +12,39 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDocTest\Aggregate\Source;
+namespace CommonDocTest\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Discovery\Project;
-use CommonDoc\Aggregate\Source\MissingDocDirectory;
+use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
-#[CoversClass(MissingDocDirectory::class)]
-#[CoversMethod(MissingDocDirectory::class, 'at')]
-final class MissingDocDirectoryTest extends TestCase
+#[CoversClass(SourceUnavailableException::class)]
+#[CoversMethod(SourceUnavailableException::class, 'for')]
+final class SourceUnavailableExceptionTest extends TestCase
 {
     #[Test]
-    public function namesTheDirectoryTheProjectAndTheRef(): void
+    public function carriesTheReasonCodeAndNamesTheProject(): void
     {
-        $failure = MissingDocDirectory::at(
-            project: new Project(
+        $previous = new RuntimeException('the remote refused the connection');
+        $failure  = SourceUnavailableException::for(
+            project : new Project(
                 name        : 'aggregate-renderer',
                 owner       : 'common-doc',
                 sitePath    : 'aggregate-renderer',
                 docDirectory: 'docs',
             ),
-            ref    : 'refs/remotes/origin/main',
+            reason  : 'the remote refused the connection',
+            previous: $previous,
         );
 
-        static::assertSame(ReasonCode::MissingDocDirectory, $failure->reasonCode);
-        static::assertStringContainsString('docs', $failure->getMessage());
+        static::assertSame(ReasonCode::SourceUnavailable, $failure->reasonCode);
         static::assertStringContainsString('aggregate-renderer', $failure->getMessage());
-        static::assertStringContainsString('refs/remotes/origin/main', $failure->getMessage());
+        static::assertStringContainsString('the remote refused the connection', $failure->getMessage());
+        static::assertSame($previous, $failure->getPrevious());
     }
 }

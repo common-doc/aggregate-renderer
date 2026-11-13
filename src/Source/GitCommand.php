@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Source;
 
+use CommonDoc\Aggregate\Exception\GitFailureException;
 use Override;
 use Symfony\Component\Process\Exception\ExceptionInterface;
 use Symfony\Component\Process\Process;
@@ -44,7 +45,7 @@ final readonly class GitCommand implements GitRunnerInterface
      * @param string                 $workingDirectory A directory the caller has resolved or created
      * @param array<string, string>  $environment      Added to the environment of this invocation only
      *
-     * @throws GitFailure When git cannot be started or exits with a non-zero code
+     * @throws GitFailureException When git cannot be started or exits with a non-zero code
      */
     #[Override]
     public function run(array $arguments, string $workingDirectory, array $environment = []): string
@@ -60,7 +61,7 @@ final readonly class GitCommand implements GitRunnerInterface
             $process->run();
 
             if (! $process->isSuccessful()) {
-                throw GitFailure::failed(
+                throw GitFailureException::failed(
                     arguments : $arguments,
                     exitCode  : $process->getExitCode(),
                     diagnostic: $process->getErrorOutput(),
@@ -69,7 +70,7 @@ final readonly class GitCommand implements GitRunnerInterface
 
             return $process->getOutput();
         } catch (ExceptionInterface $exception) {
-            throw GitFailure::didNotRun(
+            throw GitFailureException::didNotRun(
                 arguments : $arguments,
                 diagnostic: $exception->getMessage(),
             );

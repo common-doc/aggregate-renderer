@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Config;
 
+use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
+
 use function array_key_exists;
 use function array_keys;
 use function array_map;
@@ -50,26 +52,26 @@ final readonly class Section
     }
 
     /**
-     * @throws InvalidSiteConfig When the key is absent or does not hold an object
+     * @throws InvalidSiteConfigException When the key is absent or does not hold an object
      */
     public function object(string $key): self
     {
         if (! array_key_exists($key, $this->members)) {
-            throw InvalidSiteConfig::at($this->pathFor($key), 'is required.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), 'is required.');
         }
 
         /** @var mixed $value */
         $value = $this->members[$key];
 
         if (! is_array($value)) {
-            throw InvalidSiteConfig::at($this->pathFor($key), 'must be an object.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), 'must be an object.');
         }
 
         return new self($value, $this->pathFor($key));
     }
 
     /**
-     * @throws InvalidSiteConfig When the key is present but does not hold an object
+     * @throws InvalidSiteConfigException When the key is present but does not hold an object
      */
     public function optionalObject(string $key): ?self
     {
@@ -79,7 +81,7 @@ final readonly class Section
     /**
      * @return non-empty-string|null
      *
-     * @throws InvalidSiteConfig When the key is present but does not hold a non-empty string
+     * @throws InvalidSiteConfigException When the key is present but does not hold a non-empty string
      */
     public function optionalString(string $key): ?string
     {
@@ -97,7 +99,7 @@ final readonly class Section
     /**
      * @param list<string> $allowed
      *
-     * @throws InvalidSiteConfig When the section carries a key the schema does not declare
+     * @throws InvalidSiteConfigException When the section carries a key the schema does not declare
      */
     public function rejectUnknownKeys(array $allowed): void
     {
@@ -106,26 +108,26 @@ final readonly class Section
                 continue;
             }
 
-            throw InvalidSiteConfig::at($this->pathFor((string) $key), 'is not a known key.');
+            throw InvalidSiteConfigException::at($this->pathFor((string) $key), 'is not a known key.');
         }
     }
 
     /**
      * @return non-empty-string
      *
-     * @throws InvalidSiteConfig When the key is absent or does not hold a non-empty string
+     * @throws InvalidSiteConfigException When the key is absent or does not hold a non-empty string
      */
     public function string(string $key): string
     {
         if (! array_key_exists($key, $this->members)) {
-            throw InvalidSiteConfig::at($this->pathFor($key), 'is required.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), 'is required.');
         }
 
         /** @var mixed $value */
         $value = $this->members[$key];
 
         if (! is_string($value) || '' === $value) {
-            throw InvalidSiteConfig::at($this->pathFor($key), 'must be a non-empty string.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), 'must be a non-empty string.');
         }
 
         return $value;

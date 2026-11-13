@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Support;
 
-use CommonDoc\Aggregate\Source\GitFailure;
+use CommonDoc\Aggregate\Exception\GitFailureException;
 use CommonDoc\Aggregate\Source\GitRunnerInterface;
 
 use function array_shift;
@@ -30,10 +30,10 @@ final class GitRunner implements GitRunnerInterface
     /** @var list<array{arguments: list<non-empty-string>, workingDirectory: string}> */
     public array $calls = [];
 
-    /** @var list<string|GitFailure> */
+    /** @var list<string|GitFailureException> */
     private array $responses = [];
 
-    public function failing(GitFailure $failure): self
+    public function failing(GitFailureException $failure): self
     {
         $this->responses[] = $failure;
 
@@ -57,7 +57,7 @@ final class GitRunner implements GitRunnerInterface
 
         $response = array_shift($this->responses);
 
-        if ($response instanceof GitFailure) {
+        if ($response instanceof GitFailureException) {
             throw $response;
         }
 

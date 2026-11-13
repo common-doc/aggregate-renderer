@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Source;
+namespace CommonDoc\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Discovery\Project;
@@ -26,7 +26,7 @@ use function sprintf;
  * This is a defect in the project rather than in the build, so it carries its own reason code: the
  * repository custom property names a directory that the resolved ref does not have.
  */
-final class MissingDocDirectory extends RuntimeException
+final class MissingDocDirectoryException extends RuntimeException
 {
     private function __construct(
         public readonly ReasonCode $reasonCode,
