@@ -1,0 +1,535 @@
+name: "Continuous Integration"
+
+# VENDORED COPY of the webinertia organization CI workflow:
+#
+#   repository: webinertia/.github
+#   path:       .github/workflows/continuous-integration.yml
+#   ref:        master @ a7c4821
+#
+# Upstream is invoked DIRECTLY by GitHub through that organization's ruleset
+# rule "Require workflows to pass before merging", which names the file by
+# repository, path and ref. It is not a reusable workflow: there is no
+# `workflow_call` trigger, so a consumer cannot `uses:` it.
+#
+# This copy exists because the common-doc organization has no `.github`
+# repository to host the file, so nothing is inherited at org level and
+# common-doc/aggregate-renderer would otherwise have no CI at all. The filename
+# is deliberately identical to upstream so the check name is the same in both
+# organizations.
+#
+# MAINTENANCE: this file is re-synced BY HAND from webinertia/.github. Nothing
+# automates it. When upstream changes, diff against it and carry the change
+# here. The intentional divergences are this header and the `on:` block; from
+# `permissions:` down the file is meant to match upstream line for line, which
+# is why the `github.repository` guards below are kept even though they are
+# always true in this repository.
+#
+# The parameter contract is unchanged. A ruleset invocation cannot pass `with:`
+# inputs, so per-repository variation arrives at runtime from `webware-ci.json`
+# in this repository's root -- beside the other tool config (mago.toml,
+# phpunit.xml.dist, infection.json5.dist) -- a file that carries values only
+# and NO workflow ref, so it cannot drift. Vendoring the file does not change
+# that: the same keys mean the same things here.
+#
+# Running is not gating. This file executing on a pull request does not make it
+# required; that needs a repository ruleset in common-doc naming this workflow
+# as a required check, which is organization settings work, not repository
+# content.
+
+on:
+  pull_request:
+    branches:
+      - "[0-9]+.[0-9]+.x"
+
+  # push is possible here and was NOT possible upstream, which is the entire
+  # reason for the difference. A ruleset-invoked workflow is started by GitHub
+  # for the pull_request event and nothing else, so upstream's `push:` trigger
+  # would be inert there. Measured 2026-09-24 by merging webware-console#30 onto
+  # 1.0.x with such a trigger in place: the merge commit carried 0 check runs
+  # and was no run's head_sha. Push runs come only from workflows that LIVE in
+  # the pushed repository, and this file now does.
+  #
+  # The consequence upstream accepted -- merge commits carrying no checks, so
+  # the repository UI shows no tick on them and the required-workflow badge
+  # stays at whatever the last pull request run recorded -- does not have to be
+  # accepted here. A push run on the release line gives the merge commit its own
+  # checks and gives the badge something real to report.
+  #
+  # Scope is 1.0.x alone rather than the "[0-9]+.[0-9]+.x" pattern used for pull
+  # requests, so a future release line opts in deliberately instead of
+  # inheriting a second full run per merge by accident. The price is a duplicate
+  # full run on every merge to 1.0.x, paid on purpose: it is the only way the
+  # merge commit itself is verified.
+  push:
+    branches:
+      - "1.0.x"
+
+permissions:
+  contents: read
+
+jobs:
+  config:
+    name: "Read webware-ci.json"
+    runs-on: ubuntu-latest
+    outputs:
+      php_versions: ${{ steps.read.outputs.php_versions }}
+      run_integration: ${{ steps.read.outputs.run_integration }}
+      integration_php_version: ${{ steps.read.outputs.integration_php_version }}
+      composer_options: ${{ steps.read.outputs.composer_options }}
+      db_image: ${{ steps.read.outputs.db_image }}
+      db_env_json: ${{ steps.read.outputs.db_env_json }}
+      db_port: ${{ steps.read.outputs.db_port }}
+      db_health_cmd: ${{ steps.read.outputs.db_health_cmd }}
+      db_health_retries: ${{ steps.read.outputs.db_health_retries }}
+      db_health_interval_seconds: ${{ steps.read.outputs.db_health_interval_seconds }}
+      enable_codecov: ${{ steps.read.outputs.enable_codecov }}
+      enable_infection: ${{ steps.read.outputs.enable_infection }}
+      coverage_php_version: ${{ steps.read.outputs.coverage_php_version }}
+      min_msi: ${{ steps.read.outputs.min_msi }}
+      min_covered_msi: ${{ steps.read.outputs.min_covered_msi }}
+      test_env_json: ${{ steps.read.outputs.test_env_json }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Read config
+        id: read
+        run: |
+          set -euo pipefail
+          # Root is the canonical location, beside mago.toml and the other tool
+          # config in these repositories.
+          file=webware-ci.json
+          if [ ! -f "$file" ]; then
+            echo "::error::webware-ci.json not found in the repository root."
+            echo "::error::Repositories targeted by the org required-workflow ruleset must provide one. See webinertia/.github."
+            exit 1
+          fi
+          {
+            echo "php_versions=$(jq -c '.php_versions // ["8.4", "8.5"]' "$file")"
+            echo "run_integration=$(jq -r '.run_integration // false' "$file")"
+            echo "integration_php_version=$(jq -r '.integration_php_version // ""' "$file")"
+            echo "composer_options=$(jq -r '.composer_options // ""' "$file")"
+            echo "db_image=$(jq -r '.db_image // ""' "$file")"
+            echo "db_env_json=$(jq -c '.db_env_json // {}' "$file")"
+            echo "db_port=$(jq -r '.db_port // ""' "$file")"
+            echo "db_health_cmd=$(jq -r '.db_health_cmd // ""' "$file")"
+            echo "db_health_retries=$(jq -r '.db_health_retries // 30' "$file")"
+            echo "db_health_interval_seconds=$(jq -r '.db_health_interval_seconds // 2' "$file")"
+            echo "enable_codecov=$(jq -r '.enable_codecov // false' "$file")"
+            echo "enable_infection=$(jq -r '.enable_infection // false' "$file")"
+            echo "coverage_php_version=$(jq -r '.coverage_php_version // ""' "$file")"
+            echo "min_msi=$(jq -r '.min_msi // "10"' "$file")"
+            echo "min_covered_msi=$(jq -r '.min_covered_msi // "10"' "$file")"
+            echo "test_env_json=$(jq -c '.test_env_json // {}' "$file")"
+          } >> "$GITHUB_OUTPUT"
+
+      # The Mago version has exactly ONE home: the `version =` pin in
+      # webinertia/webware-tools/mago.toml, resolved at run time by the mago and
+      # mutation-test jobs and by each repository's tooling container. A literal
+      # anywhere else re-introduces the drift this workflow exists to prevent,
+      # so it fails the build instead of passing silently.
+      - name: Reject duplicated Mago version pins
+        if: github.repository != 'webinertia/webware-tools'
+        run: |
+          set -euo pipefail
+          failed=0
+
+          scan() {
+            description="$1"
+            shift
+            if found=$(grep -rInE "$@" --exclude-dir=vendor --exclude-dir=.git . 2>/dev/null); then
+              printf '::error::%s\n' "$description"
+              printf '%s\n' "$found"
+              failed=1
+            fi
+          }
+
+          scan 'Dockerfile pins Mago with a literal build arg; it is derived from the webware-tools pin.' --include=Dockerfile '^ARG[[:space:]]+MAGO_VERSION[[:space:]]*='
+          scan 'compose.yml passes a literal Mago build arg; the Dockerfile derives it.' --include='compose*.yml' --include='compose*.yaml' '^[[:space:]]*MAGO_VERSION[[:space:]]*:'
+          scan 'A workflow installs a literal Mago version.' --include='*.yml' --include='*.yaml' 'tools:[[:space:]]*mago:[0-9]'
+          scan 'mago.toml restates the Mago version pin; it is inherited from webware/webware-tools.' --include='mago.toml' '^[[:space:]]*version[[:space:]]*=[[:space:]]*"'
+          scan 'mago.toml pins the editor schema to a Mago version; use the unpinned URL.' --include='mago.toml' '#:schema.*mago\.carthage\.software/[0-9]'
+
+          exit "$failed"
+
+      # Formatting is a centre decision, and a consumer that restates or
+      # overrides a formatter key takes that decision back locally. Nothing
+      # breaks immediately, which is the problem: the local value simply stops
+      # tracking webware/webware-tools, so the next centre change never arrives.
+      # It fails here instead.
+      #
+      # The scan names the offending line. The `mago` job additionally compares
+      # the RESOLVED formatter section against the centre's own, so a spelling
+      # this scan does not anticipate -- or a config feature a later Mago
+      # version adds -- cannot slip through unobserved.
+      #
+      # `extends` is constrained to the centre alone. A second layer is an
+      # ordinary file that resolves into the mago config, so it is exactly where
+      # a formatter override would sit while mago.toml itself stayed clean.
+      - name: Reject consumer formatter overrides
+        if: github.repository != 'webinertia/webware-tools'
+        run: |
+          set -euo pipefail
+          failed=0
+
+          scan() {
+            description="$1"
+            shift
+            if found=$(grep -rInE "$@" --exclude-dir=vendor --exclude-dir=.git . 2>/dev/null); then
+              printf '::error::%s\n' "$description"
+              printf '%s\n' "$found"
+              failed=1
+            fi
+          }
+
+          scan 'A TOML file declares a [formatter] table; formatting is owned by webware/webware-tools.' --include='*.toml' "^[[:space:]]*\[+[[:space:]]*[\"']?formatter[\"']?[[:space:]]*(\]|\.)"
+          scan 'A TOML file sets a formatter key; formatting is owned by webware/webware-tools.' --include='*.toml' "^[[:space:]]*[\"']?formatter[\"']?[[:space:]]*[.=]"
+
+          expected='"vendor/webware/webware-tools/mago.toml"'
+          while IFS= read -r file; do
+            if [ "$(grep -cE '^[[:space:]]*extends[[:space:]]*=' "$file" || true)" -ne 1 ]; then
+              printf '::error::%s must contain exactly one extends directive naming the centre config.\n' "$file"
+              failed=1
+              continue
+            fi
+            value=$(sed -nE 's/^[[:space:]]*extends[[:space:]]*=[[:space:]]*//p' "$file" | tr -d '\r' | sed -E 's/[[:space:]]*$//')
+            if [ "$value" != "$expected" ]; then
+              printf '::error::%s extends %s; only the centre config may be extended, because a second layer can carry formatter rules.\n' "$file" "$value"
+              failed=1
+            fi
+          done < <(find . -name mago.toml -not -path './vendor/*' -not -path './.git/*')
+
+          exit "$failed"
+
+  mago:
+    name: "Mago (PHP ${{ matrix.php }})"
+    needs: config
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJSON(needs.config.outputs.php_versions) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      # setup-php declares no cache input; caching is done with actions/cache
+      # over composer's own cache directory, as its README documents.
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php-${{ matrix.php }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-php-${{ matrix.php }}-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress ${{ needs.config.outputs.composer_options }}
+
+      # Overrides php-version from the repository's mago.toml for each matrix
+      # leg without mutating the committed config file.
+      # Mago is NOT pinned in this workflow. Its version is read from the
+      # webware-tools mago.toml that composer actually installed, so the binary
+      # always matches the `version =` pin that mago itself enforces. That pin
+      # has exactly one home: webinertia/webware-tools/mago.toml.
+      - name: Resolve Mago version
+        id: mago-version
+        run: |
+          set -euo pipefail
+          pin=vendor/webware/webware-tools/mago.toml
+          if [ ! -f "$pin" ]; then
+            echo "::error::$pin not found. Did composer install resolve webware/webware-tools?"
+            exit 1
+          fi
+          version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' "$pin" | head -n1)
+          if [ -z "$version" ]; then
+            echo "::error::No 'version = \"x.y.z\"' pin found in $pin."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Mago ${{ steps.mago-version.outputs.version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: mago:${{ steps.mago-version.outputs.version }}
+
+      - name: Pin Mago PHP version
+        run: echo "MAGO_PHP_VERSION=${{ matrix.php }}" >> "$GITHUB_ENV"
+
+      # The backstop for "Reject consumer formatter overrides": rather than
+      # pattern-matching the config text, resolve the formatter section twice and
+      # require them to be identical. One read includes this repository's own
+      # config, the other is the vendored centre alone. Anything that changes a
+      # formatting decision here shows up as a diff, however it was written.
+      #
+      # This runs after the centre config is reviewed, so a difference means the
+      # consumer diverged, not the centre. The centre's own values are free to
+      # change: both sides read the same installed file.
+      - name: Verify the formatter config is the centre's
+        if: github.repository != 'webinertia/webware-tools'
+        run: |
+          set -euo pipefail
+          centre=vendor/webware/webware-tools/mago.toml
+          if [ ! -f "$centre" ]; then
+            echo "::error::$centre not found. Did composer install resolve webware/webware-tools?"
+            exit 1
+          fi
+          mago config --show formatter > formatter-resolved.json
+          mago --config "$centre" config --show formatter > formatter-centre.json
+          echo "--- centre ---"
+          cat formatter-centre.json
+          echo "--- this repository ---"
+          cat formatter-resolved.json
+          if ! diff -u formatter-centre.json formatter-resolved.json; then
+            echo "::error::This repository's effective formatter configuration differs from webware/webware-tools/mago.toml. Formatter rules are owned centrally and must not be overridden by a consumer."
+            exit 1
+          fi
+
+      - name: Check formatting
+        run: mago format --check
+
+      - name: Lint
+        if: success() || failure()
+        run: mago lint
+
+      - name: Analyze
+        if: success() || failure()
+        run: mago analyze
+
+      - name: Guard
+        if: success() || failure()
+        run: mago guard
+
+  # Mago is the fastest signal in this workflow: it needs no database, runs no
+  # test suite, and typically finishes in 20-30s, against 30-105s for a single
+  # mutation run. It therefore gates the two jobs that cost real time, so a PR
+  # with a lint, analysis or guard finding stops after the cheapest stage that
+  # can detect it instead of burning six test legs and a mutation run on code
+  # that cannot merge.
+  #
+  # `needs: mago` requires every leg of the matrix to pass, which is intended:
+  # one PHP version failing Mago blocks downstream, because the PR is red either
+  # way. `fail-fast: false` on the mago job is kept so both legs still report,
+  # rather than an 8.4 failure cancelling the 8.5 run that may hold the rest of
+  # the findings.
+  test:
+    name: "Test (PHP ${{ matrix.php }} | ${{ matrix.dependencies }})"
+    needs: [config, mago]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ${{ fromJSON(needs.config.outputs.php_versions) }}
+        dependencies: ["lowest", "locked", "latest"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: ${{ (matrix.php == needs.config.outputs.coverage_php_version && matrix.dependencies == 'locked') && 'pcov' || 'none' }}
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php-${{ matrix.php }}-${{ matrix.dependencies }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-php-${{ matrix.php }}-
+
+      # The DB is a manual step, not a native `services:` block, because
+      # `services:` cannot be conditionally omitted and driver packages need
+      # different engines (mysql, postgres, mariadb, oracle, mssql, ...).
+      # A repository with no DB simply omits `db_image`, so both steps skip.
+      #
+      # Pulling and booting the DB costs ~20-25s per leg, which dominates a
+      # test leg, so it only starts where the integration suite will run.
+      # `integration_php_version` narrows that to a single leg; empty keeps
+      # the original behaviour of running integration on every leg.
+      - name: Start DB service
+        if: needs.config.outputs.db_image != '' && fromJSON(needs.config.outputs.run_integration) && (needs.config.outputs.integration_php_version == '' || matrix.php == needs.config.outputs.integration_php_version)
+        run: |
+          docker run -d --name db \
+            -p ${{ needs.config.outputs.db_port }}:${{ needs.config.outputs.db_port }} \
+            $(echo '${{ needs.config.outputs.db_env_json }}' | jq -r 'to_entries[] | "-e \(.key)=\(.value)"' | tr '\n' ' ') \
+            ${{ needs.config.outputs.db_image }}
+
+      - name: Wait for DB to be healthy
+        if: needs.config.outputs.db_image != '' && fromJSON(needs.config.outputs.run_integration) && (needs.config.outputs.integration_php_version == '' || matrix.php == needs.config.outputs.integration_php_version)
+        run: |
+          for i in $(seq 1 ${{ fromJSON(needs.config.outputs.db_health_retries) }}); do
+            docker exec db ${{ needs.config.outputs.db_health_cmd }} && exit 0
+            sleep ${{ fromJSON(needs.config.outputs.db_health_interval_seconds) }}
+          done
+          echo "DB did not become healthy in time" && exit 1
+
+      - name: Install dependencies (lowest)
+        if: matrix.dependencies == 'lowest'
+        run: composer update --prefer-lowest --no-interaction --no-progress ${{ needs.config.outputs.composer_options }}
+
+      - name: Install dependencies (locked)
+        if: matrix.dependencies == 'locked'
+        run: composer install --no-interaction --no-progress ${{ needs.config.outputs.composer_options }}
+
+      - name: Install dependencies (latest)
+        if: matrix.dependencies == 'latest'
+        run: composer update --no-interaction --no-progress ${{ needs.config.outputs.composer_options }}
+
+      # PHPUnit's <env> will not override an already-set real env var (no
+      # force="true"), so this lets a repository override a connection setting
+      # for CI without editing phpunit.xml.dist, which needs different values
+      # for local dev (e.g. Docker Compose networking).
+      - name: Export test environment overrides
+        if: needs.config.outputs.test_env_json != '{}'
+        run: echo '${{ needs.config.outputs.test_env_json }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+      - name: Unit tests
+        if: ${{ !(matrix.php == needs.config.outputs.coverage_php_version && matrix.dependencies == 'locked') }}
+        run: composer test
+
+      - name: Unit tests with coverage
+        if: matrix.php == needs.config.outputs.coverage_php_version && matrix.dependencies == 'locked'
+        run: composer test-coverage
+
+      - name: Integration tests
+        if: fromJSON(needs.config.outputs.run_integration) && (needs.config.outputs.integration_php_version == '' || matrix.php == needs.config.outputs.integration_php_version)
+        run: composer test-integration
+
+      - name: Upload coverage artifact
+        if: matrix.php == needs.config.outputs.coverage_php_version && matrix.dependencies == 'locked'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-clover
+          path: clover.xml
+
+  codecov:
+    name: "Codecov"
+    needs: [config, test]
+    if: fromJSON(needs.config.outputs.enable_codecov)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-clover
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # CODECOV_TOKEN is an org-wide upload token, which cannot infer the
+          # target repository the way a repository-specific token can.
+          # `github.repository` resolves to the target repository here.
+          slug: ${{ github.repository }}
+          files: clover.xml
+          # Report-only across the fleet; do not fail CI on upload issues.
+          fail_ci_if_error: false
+
+  # The mago edge here is redundant in practice, since test already depends on
+  # mago and a skipped dependency skips this job. It is declared anyway so the
+  # rule reads at the job it protects rather than being inferred through test.
+  mutation-test:
+    name: "Mutation testing"
+    needs: [config, test, mago]
+    if: fromJSON(needs.config.outputs.enable_infection)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ needs.config.outputs.coverage_php_version }}
+          coverage: pcov
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v6
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-php-${{ needs.config.outputs.coverage_php_version }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-php-${{ needs.config.outputs.coverage_php_version }}-
+
+      - name: Start DB service
+        if: needs.config.outputs.db_image != '' && fromJSON(needs.config.outputs.run_integration)
+        run: |
+          docker run -d --name db \
+            -p ${{ needs.config.outputs.db_port }}:${{ needs.config.outputs.db_port }} \
+            $(echo '${{ needs.config.outputs.db_env_json }}' | jq -r 'to_entries[] | "-e \(.key)=\(.value)"' | tr '\n' ' ') \
+            ${{ needs.config.outputs.db_image }}
+
+      - name: Wait for DB to be healthy
+        if: needs.config.outputs.db_image != '' && fromJSON(needs.config.outputs.run_integration)
+        run: |
+          for i in $(seq 1 ${{ fromJSON(needs.config.outputs.db_health_retries) }}); do
+            docker exec db ${{ needs.config.outputs.db_health_cmd }} && exit 0
+            sleep ${{ fromJSON(needs.config.outputs.db_health_interval_seconds) }}
+          done
+          echo "DB did not become healthy in time" && exit 1
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress ${{ needs.config.outputs.composer_options }}
+
+      # Mago is NOT pinned in this workflow either; see the mago job for the
+      # rationale. The version comes from the installed webware-tools pin.
+      - name: Resolve Mago version
+        id: mago-version
+        run: |
+          set -euo pipefail
+          pin=vendor/webware/webware-tools/mago.toml
+          if [ ! -f "$pin" ]; then
+            echo "::error::$pin not found. Did composer install resolve webware/webware-tools?"
+            exit 1
+          fi
+          version=$(sed -nE 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' "$pin" | head -n1)
+          if [ -z "$version" ]; then
+            echo "::error::No 'version = \"x.y.z\"' pin found in $pin."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Mago ${{ steps.mago-version.outputs.version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ needs.config.outputs.coverage_php_version }}
+          coverage: pcov
+          tools: mago:${{ steps.mago-version.outputs.version }}
+
+      - name: Export test environment overrides
+        if: needs.config.outputs.test_env_json != '{}'
+        run: echo '${{ needs.config.outputs.test_env_json }}' | jq -r 'to_entries[] | "\(.key)=\(.value)"' >> "$GITHUB_ENV"
+
+      - name: Pin Mago PHP version
+        run: echo "MAGO_PHP_VERSION=${{ needs.config.outputs.coverage_php_version }}" >> "$GITHUB_ENV"
+
+      # Mago is invoked internally by Infection (staticAnalysisTool in
+      # infection.json5) as a per-mutant equivalence filter, which is a separate
+      # concern from the job dependency above: that one decides whether this job
+      # starts at all, this one runs Mago per mutant inside it.
+      - name: Mutation testing
+        env:
+          INFECTION_DASHBOARD_API_KEY: ${{ secrets.INFECTION_DASHBOARD_API_KEY }}
+        run: composer mutation-test -- --min-msi=${{ needs.config.outputs.min_msi }} --min-covered-msi=${{ needs.config.outputs.min_covered_msi }} --logger-github
