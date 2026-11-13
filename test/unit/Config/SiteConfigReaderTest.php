@@ -33,6 +33,7 @@ use function mkdir;
 use function random_bytes;
 use function rmdir;
 use function sprintf;
+use function str_repeat;
 use function sys_get_temp_dir;
 use function unlink;
 
@@ -44,6 +45,18 @@ use const JSON_THROW_ON_ERROR;
 final class SiteConfigReaderTest extends TestCase
 {
     private string $directory;
+
+    #[Test]
+    public function normalisesAPathWrittenWithEitherSeparator(): void
+    {
+        $configuration                        = $this->configuration();
+        $configuration['output']['directory'] = 'sub\\dir';
+
+        static::assertStringEndsWith(
+            'sub' . DIRECTORY_SEPARATOR . 'dir',
+            $this->read($configuration)->outputDirectory,
+        );
+    }
 
     #[Test]
     public function readsAMinimalConfigurationAndSuppliesTheDefaults(): void
@@ -73,12 +86,68 @@ final class SiteConfigReaderTest extends TestCase
     }
 
     #[Test]
+    public function readsATemplateMapOfMoreThanOneEntry(): void
+    {
+        static::assertTrue(mkdir($this->directory . DIRECTORY_SEPARATOR . 'templates'));
+
+        foreach (['page.php', 'error.php'] as $template) {
+            file_put_contents(
+                $this->directory . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $template,
+                data: '<?php',
+            );
+        }
+
+        $configuration              = $this->configuration();
+        $configuration['templates'] = ['map' => [
+            'page'  => 'templates/page.php',
+            'error' => 'templates/error.php',
+        ]];
+
+        static::assertSame(
+            ['page' => 'templates/page.php', 'error' => 'templates/error.php'],
+            $this->read($configuration)->templateMap,
+        );
+    }
+
+    #[Test]
     public function readsTheDeclaredStrategy(): void
     {
         $configuration             = $this->configuration();
         $configuration['versions'] = ['strategy' => 'tree'];
 
         static::assertSame(Strategy::Tree, $this->read($configuration)->strategy);
+    }
+
+    #[Test]
+    public function rejectsADocumentNestedBeyondTheDecodingDepthAsInvalidJson(): void
+    {
+        $path = $this->directory . DIRECTORY_SEPARATOR . 'site.json';
+        file_put_contents($path, data: str_repeat(
+            string: '{"a":',
+            times : 512,
+        ) . '1'
+            . str_repeat(
+                string: '}',
+                times : 512,
+            ));
+
+        $this->assertRejected('site.json', static fn(): SiteConfig => new SiteConfigReader()->read($path));
+    }
+
+    #[Test]
+    public function rejectsADocumentNestedWithinTheDecodingDepthByItsUnknownTopLevelKey(): void
+    {
+        $path = $this->directory . DIRECTORY_SEPARATOR . 'site.json';
+        file_put_contents($path, data: str_repeat(
+            string: '{"a":',
+            times : 511,
+        ) . '1'
+            . str_repeat(
+                string: '}',
+                times : 511,
+            ));
+
+        $this->assertRejected('a', static fn(): SiteConfig => new SiteConfigReader()->read($path));
     }
 
     #[Test]
@@ -127,12 +196,71 @@ final class SiteConfigReaderTest extends TestCase
     }
 
     #[Test]
+    public function rejectsAnUnknownKeyInsideTheOrganizationSection(): void
+    {
+        $configuration                         = $this->configuration();
+        $configuration['organization']['logo'] = 'logo.svg';
+
+        $this->assertRejected('organization.logo', fn(): SiteConfig => $this->read($configuration));
+    }
+
+    #[Test]
+    public function rejectsAnUnknownKeyInsideTheOutputSection(): void
+    {
+        $configuration                       = $this->configuration();
+        $configuration['output']['compress'] = true;
+
+        $this->assertRejected('output.compress', fn(): SiteConfig => $this->read($configuration));
+    }
+
+    #[Test]
+    public function rejectsAnUnknownKeyInsideTheSiteSection(): void
+    {
+        $configuration                 = $this->configuration();
+        $configuration['site']['base'] = '/docs';
+
+        $this->assertRejected('site.base', fn(): SiteConfig => $this->read($configuration));
+    }
+
+    #[Test]
+    public function rejectsAnUnknownKeyInsideTheTemplatesSection(): void
+    {
+        $configuration              = $this->configuration();
+        $configuration['templates'] = ['directory' => 'templates'];
+
+        $this->assertRejected('templates.directory', fn(): SiteConfig => $this->read($configuration));
+    }
+
+    #[Test]
+    public function rejectsAnUnknownKeyInsideTheVersionsSection(): void
+    {
+        $configuration             = $this->configuration();
+        $configuration['versions'] = ['strategy' => 'tree', 'cadence' => 'weekly'];
+
+        $this->assertRejected('versions.cadence', fn(): SiteConfig => $this->read($configuration));
+    }
+
+    #[Test]
     public function rejectsAStrategyThatIsNotAMember(): void
     {
         $configuration             = $this->configuration();
         $configuration['versions'] = ['strategy' => 'branch'];
 
         $this->assertRejected('versions.strategy', fn(): SiteConfig => $this->read($configuration));
+    }
+
+    #[Test]
+    public function rejectsATemplateMapValueThatIsADirectory(): void
+    {
+        static::assertTrue(mkdir(
+            $this->directory . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'page.php',
+            recursive: true,
+        ));
+
+        $configuration              = $this->configuration();
+        $configuration['templates'] = ['map' => ['page' => 'templates/page.php']];
+
+        $this->assertRejected('templates.map.page', fn(): SiteConfig => $this->read($configuration));
     }
 
     #[Test]
