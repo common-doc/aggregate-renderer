@@ -23,6 +23,7 @@ use PHPUnit\Framework\TestCase;
 
 use function getcwd;
 
+use const DIRECTORY_SEPARATOR;
 use const PHP_BINARY;
 
 #[CoversClass(GitCommand::class)]
@@ -82,6 +83,27 @@ final class GitCommandTest extends TestCase
             arguments       : ['-r', 'fwrite(STDERR, "the command failed"); exit(3);'],
             workingDirectory: self::workingDirectory(),
         );
+    }
+
+    #[Test]
+    public function reportsAWorkingDirectoryThatDoesNotExistAsACommandThatCouldNotRun(): void
+    {
+        $absent = self::workingDirectory() . DIRECTORY_SEPARATOR . 'absent-directory';
+
+        try {
+            self::command()->run(
+                arguments       : ['status'],
+                workingDirectory: $absent,
+            );
+
+            static::fail('A working directory that does not exist must not produce an answer.');
+        } catch (GitFailureException $failure) {
+            static::assertStringStartsWith(
+                'The git command "git status" could not be run: ',
+                $failure->getMessage(),
+            );
+            static::assertStringContainsString($absent, $failure->getMessage());
+        }
     }
 
     #[Test]

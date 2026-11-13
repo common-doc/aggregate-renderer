@@ -151,6 +151,45 @@ final class SiteConfigReaderTest extends TestCase
     }
 
     #[Test]
+    public function rejectsAFileThatCannotBeRead(): void
+    {
+        $path = $this->directory . DIRECTORY_SEPARATOR . 'absent.json';
+
+        try {
+            new SiteConfigReader()->read($path);
+
+            static::fail('A configuration file that cannot be read must not be accepted.');
+        } catch (InvalidSiteConfigException $exception) {
+            static::assertSame('site.json', $exception->key);
+            static::assertSame(ReasonCode::InvalidSiteConfig, $exception->reasonCode);
+            static::assertSame(
+                sprintf('Invalid site configuration at "site.json": "%s" cannot be read.', $path),
+                $exception->getMessage(),
+            );
+        }
+    }
+
+    #[Test]
+    public function rejectsAFileThatDoesNotHoldAJsonObject(): void
+    {
+        $path = $this->directory . DIRECTORY_SEPARATOR . 'site.json';
+        file_put_contents($path, data: '42');
+
+        try {
+            new SiteConfigReader()->read($path);
+
+            static::fail('A configuration file must hold a JSON object.');
+        } catch (InvalidSiteConfigException $exception) {
+            static::assertSame('site.json', $exception->key);
+            static::assertSame(ReasonCode::InvalidSiteConfig, $exception->reasonCode);
+            static::assertSame(
+                'Invalid site configuration at "site.json": the file does not hold a JSON object.',
+                $exception->getMessage(),
+            );
+        }
+    }
+
+    #[Test]
     public function rejectsAFileThatIsNotValidJson(): void
     {
         $path = $this->directory . DIRECTORY_SEPARATOR . 'site.json';
