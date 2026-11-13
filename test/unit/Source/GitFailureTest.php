@@ -76,10 +76,16 @@ final class GitFailureTest extends TestCase
         $failure = GitFailure::failed(
             arguments : ['fetch'],
             exitCode  : 1,
-            diagnostic: str_repeat(string: 'a', times: 1000),
+            diagnostic: str_repeat(
+                string: 'a',
+                times : 1000,
+            ),
         );
 
         static::assertSame(400, strlen($failure->getMessage()) - strlen('The git command "git fetch" exited with 1: '));
-        static::assertTrue(str_contains($failure->getMessage(), str_repeat(string: 'a', times: 400)));
+        static::assertTrue(str_contains($failure->getMessage(), str_repeat(
+            string: 'a',
+            times : 400,
+        )));
     }
 }

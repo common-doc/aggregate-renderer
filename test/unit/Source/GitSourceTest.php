@@ -88,7 +88,7 @@ final class GitSourceTest extends TestCase
             recursive  : true,
         ));
 
-        $checkout   = new GitCheckout(
+        $checkout = new GitCheckout(
             runner        : $runner,
             cacheDirectory: $this->temporary->path,
         );

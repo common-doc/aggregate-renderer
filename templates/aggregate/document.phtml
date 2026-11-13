@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * This file is part of the common-doc/aggregate-renderer package.
+ *
+ * Copyright (c) 2026 Joey Smith <jsmith@webinertia.net>
+ * and contributors.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * The aggregate's replacement for the shared document address.
+ *
+ * It is registered at `commondoc::document`, so it is the template commondoc's document renderer
+ * resolves, and it emits the body region only: no doctype, no html element and no head. The shell,
+ * the title and the site chrome belong to the layout, which is where the strip pays off, because a
+ * site can replace this file without being able to break the head of every page.
+ *
+ * The body arrives already rendered by CommonMark, and the page arrives when the render belongs to
+ * one, so it is only read behind a null check. `content` belongs to the layout and is never set here.
+ *
+ * @var string $documentBody
+ * @var \CommonDoc\View\Page|null $page
+ */
+?>
+<?php if (null !== $page) : ?>
+    <?php $this->headTitle($page->label); ?>
+<?php endif ?>
+<main class="document">
+    <?= $documentBody ?>
+</main>

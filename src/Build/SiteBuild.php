@@ -15,6 +15,7 @@ use CommonDoc\Aggregate\Report\ReportFile;
 use CommonDoc\Aggregate\Version\Target;
 use InvalidArgumentException;
 use JsonException;
+use Mezzio\Template\Exception\ExceptionInterface as TemplateExceptionInterface;
 use RuntimeException;
 
 use function array_push;
@@ -46,7 +47,8 @@ final readonly class SiteBuild
      * @throws InvalidArgumentException When the output tree, the totals or the report path refuse the build
      * @throws JsonException            When the report cannot be encoded
      * @throws MissingCname            When the site address file does not hold the configured hostname
-     * @throws RuntimeException        When the output tree or the report cannot be written
+     * @throws RuntimeException            When the output tree or the report cannot be written
+     * @throws TemplateExceptionInterface  When a page cannot be rendered
      */
     public function build(SiteConfig $config): BuildReport
     {

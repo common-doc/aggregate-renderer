@@ -1,0 +1,63 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is part of the common-doc/aggregate-renderer package.
+ *
+ * Copyright (c) 2026 Joey Smith <jsmith@webinertia.net>
+ * and contributors.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+use CommonDoc\Aggregate\ConfigProvider;
+use CommonDoc\Aggregate\Console\BuildCommand;
+use Laminas\ServiceManager\ServiceManager;
+use Psr\Container\ContainerExceptionInterface;
+use Symfony\Component\Console\Application;
+
+$autoloaders = [
+    __DIR__ . '/../vendor/autoload.php',
+    __DIR__ . '/../../../autoload.php',
+];
+
+$autoloader = null;
+
+foreach ($autoloaders as $candidate) {
+    if (is_file($candidate)) {
+        $autoloader = $candidate;
+
+        break;
+    }
+}
+
+if (null === $autoloader) {
+    fwrite(STDERR, "aggregate-render: no autoloader found. Run composer install first.\n");
+
+    exit(1);
+}
+
+require $autoloader;
+
+$container = new ServiceManager((new ConfigProvider())->getDependencies());
+
+try {
+    $command = $container->get(BuildCommand::class);
+} catch (ContainerExceptionInterface $exception) {
+    fwrite(STDERR, "aggregate-render: the build cannot be assembled: {$exception->getMessage()}\n");
+    fwrite(
+        STDERR,
+        "A consuming package must register an implementation against "
+            . "CommonDoc\\Aggregate\\Discovery\\ProjectSourceInterface before this command can run.\n",
+    );
+
+    exit(2);
+}
+
+$application = new Application('aggregate-render');
+$application->add($command);
+
+exit($application->run());

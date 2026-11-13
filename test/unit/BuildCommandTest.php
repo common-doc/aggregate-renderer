@@ -11,11 +11,13 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate;
 
-use CommonDoc\Aggregate\Build\ProjectBuild;
-use CommonDoc\Aggregate\Build\SiteBuild;
+use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Console\BuildCommand;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
+use CommonDoc\Aggregate\Report\ReportFileFactory;
+use CommonDoc\Aggregate\Source\SourceFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceInterface;
 use CommonDoc\Aggregate\Version\StrategyFactory;
 use CommonDocTest\Aggregate\Support\SiteRenderer;
@@ -109,19 +111,21 @@ final class BuildCommandTest extends TestCase
         $discovery = $this->createStub(ProjectSourceInterface::class);
         $discovery->method('all')->willReturn([]);
 
-        $renderer = new SiteRenderer();
+        $sources = $this->createStub(SourceFactoryInterface::class);
+        $sources->method('create')->willReturn($this->createStub(SourceInterface::class));
+
+        $renderers = $this->createStub(SiteRendererFactoryInterface::class);
+        $renderers->method('create')->willReturn(new SiteRenderer());
 
         return new BuildCommand(
             new SiteConfigReader(),
-            new SiteBuild(
-                discovery   : $discovery,
-                renderer    : $renderer,
-                projectBuild: new ProjectBuild(
-                    $this->createStub(SourceInterface::class),
-                    $renderer,
-                    new StrategyFactory(),
-                ),
+            new SiteBuildFactory(
+                discovery : $discovery,
+                sources   : $sources,
+                strategies: new StrategyFactory(),
+                renderers : $renderers,
             ),
+            new ReportFileFactory(),
         );
     }
 

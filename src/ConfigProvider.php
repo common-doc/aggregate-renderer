@@ -14,21 +14,85 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate;
 
+use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
+use CommonDoc\Aggregate\Build\SiteBuildFactory;
+use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
+use CommonDoc\Aggregate\Config\SiteConfigReader;
+use CommonDoc\Aggregate\Console\BuildCommand;
+use CommonDoc\Aggregate\Console\Container\BuildCommandFactory;
+use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Render\SiteRendererFactory;
+use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
+use CommonDoc\Aggregate\Render\ViewFactory;
+use CommonDoc\Aggregate\Report\ReportFileFactory;
+use CommonDoc\Aggregate\Report\ReportFileFactoryInterface;
+use CommonDoc\Aggregate\Source\SourceFactory;
+use CommonDoc\Aggregate\Source\SourceFactoryInterface;
+use CommonDoc\Aggregate\Version\StrategyFactory;
+use Laminas\ServiceManager\Factory\InvokableFactory;
+
 /**
  * Wiring entry point for the package.
  *
  * Declared under `extra.laminas.config-provider` in composer.json, so a consumer's
  * config aggregator merges this without any further registration.
  *
+ * Everything registered here is either configuration-free or a factory that needs the configuration
+ * to build its product, because the output tree, the git source and the renderer all depend on
+ * values that only exist once `site.json` has been read. Discovery is deliberately absent: this
+ * package does not yet ship a project source, so a consumer must register one against
+ * {@see ProjectSourceInterface} before the command can be built.
+ *
  * @internal
  */
 final class ConfigProvider
 {
-    /** @return array<string, mixed> */
+    /**
+     * Services the command needs, keyed so a consumer can replace any one of them.
+     *
+     * Each seam is an interface with an alias onto this package's class, and the alias target is
+     * what carries the factory. Registering the interface straight against a class name would let
+     * the container build that class as the service with no arguments, which is only correct for
+     * the factories that genuinely hold no dependencies.
+     *
+     * @return array{aliases: array<interface-string, class-string>, factories: array<class-string, class-string>}
+     */
     public function getDependencies(): array
     {
         return [
-            'factories' => [],
+            'aliases'   => [
+                ReportFileFactoryInterface::class   => ReportFileFactory::class,
+                SiteBuildFactoryInterface::class    => SiteBuildFactory::class,
+                SiteRendererFactoryInterface::class => SiteRendererFactory::class,
+                SourceFactoryInterface::class       => SourceFactory::class,
+            ],
+            'factories' => [
+                BuildCommand::class        => BuildCommandFactory::class,
+                ReportFileFactory::class   => InvokableFactory::class,
+                SiteBuildFactory::class    => SiteBuildFactoryFactory::class,
+                SiteConfigReader::class    => InvokableFactory::class,
+                SiteRendererFactory::class => InvokableFactory::class,
+                SourceFactory::class       => InvokableFactory::class,
+                StrategyFactory::class     => InvokableFactory::class,
+            ],
+        ];
+    }
+
+    /**
+     * The template addresses this package ships.
+     *
+     * Contributed under `templates`, which merges with commondoc's own map: the document address is
+     * replaced by this package's body template, and the layout is this package's shell, which owns
+     * the doctype, the head and the site chrome. The map outranks the path stack, so a site that
+     * leaves a name alone still renders through a shipped file.
+     *
+     * @return array{map: array<non-empty-string, non-empty-string>, layout: non-empty-string}
+     */
+    public function getViewConfig(): array
+    {
+        return [
+            'map'    => ViewFactory::defaults(),
+            'layout' => ViewFactory::LAYOUT,
         ];
     }
 
@@ -37,6 +101,7 @@ final class ConfigProvider
     {
         return [
             'dependencies' => $this->getDependencies(),
+            'templates'    => $this->getViewConfig(),
         ];
     }
 }

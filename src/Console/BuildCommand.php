@@ -15,13 +15,16 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Console;
 
 use CommonDoc\Aggregate\Build\BuildReport;
-use CommonDoc\Aggregate\Build\SiteBuild;
+use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Config\InvalidSiteConfig;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Output\MissingCname;
 use CommonDoc\Aggregate\Report\ReportFile;
+use CommonDoc\Aggregate\Report\ReportFileFactoryInterface;
 use InvalidArgumentException;
 use JsonException;
+use League\CommonMark\Exception\AlreadyInitializedException;
+use Mezzio\Template\Exception\ExceptionInterface as TemplateExceptionInterface;
 use Override;
 use RuntimeException;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -56,7 +59,8 @@ final class BuildCommand extends Command
      */
     public function __construct(
         private readonly SiteConfigReader $reader,
-        private readonly SiteBuild $build,
+        private readonly SiteBuildFactoryInterface $builds,
+        private readonly ReportFileFactoryInterface $reports,
     ) {
         parent::__construct(self::NAME);
     }
@@ -87,7 +91,9 @@ final class BuildCommand extends Command
      * @throws InvalidArgumentException When the report path or the report itself is refused
      * @throws JsonException When the report cannot be encoded as JSON
      * @throws MissingCname When the site address file does not hold the configured hostname
-     * @throws RuntimeException When the output tree or the report cannot be written
+     * @throws RuntimeException            When the output tree or the report cannot be written
+     * @throws AlreadyInitializedException When the markdown environment has already been configured
+     * @throws TemplateExceptionInterface  When a page cannot be rendered
      */
     #[Override]
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -106,10 +112,10 @@ final class BuildCommand extends Command
             return self::EXIT_BLOCKED;
         }
 
-        $report = $this->build->build($config);
+        $report = $this->builds->create(config: $config)->build(config: $config);
 
         if (true === $input->getOption('json')) {
-            $this->writeJson($output, new ReportFile($config->reportPath), $report);
+            $this->writeJson($output, $this->reports->create(config: $config), $report);
 
             return $report->exitCode;
         }
