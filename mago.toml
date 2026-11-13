@@ -4,6 +4,13 @@ php-version = "8.4.1"
 [linter]
 baseline = "lint-baseline.toml"
 
+[linter.rules]
+# The eight promoted parameters are the required top-level keys of site-config.schema.json, listed in
+# data-model.md. The finding cannot be fixed without inventing nesting the schema does not have, so the
+# rule's advice cannot be taken for this file. Excluded here rather than baselined, so every other file
+# still carries the rule at the preset threshold.
+excessive-parameter-list = { exclude = ["src/Config/SiteConfig.php"] }
+
 [analyzer]
 baseline = "analysis-baseline.toml"
 
