@@ -123,12 +123,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/common-doc/commondoc.git",
-                "reference": "36b5037f123b1481c8352de070e89ede32e774f9"
+                "reference": "184f7e50dab4e9232aff4bf469c8333d6ed7e783"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/common-doc/commondoc/zipball/36b5037f123b1481c8352de070e89ede32e774f9",
-                "reference": "36b5037f123b1481c8352de070e89ede32e774f9",
+                "url": "https://api.github.com/repos/common-doc/commondoc/zipball/184f7e50dab4e9232aff4bf469c8333d6ed7e783",
+                "reference": "184f7e50dab4e9232aff4bf469c8333d6ed7e783",
                 "shasum": ""
             },
             "require": {
@@ -140,7 +140,8 @@
                 "laminas/laminas-servicemanager": "^4.5",
                 "laminas/laminas-view": "^3.1",
                 "league/commonmark": "^2.10",
-                "php": "~8.4.1 || ~8.5.0",
+                "mezzio/mezzio-laminasviewrenderer": "^3.0",
+                "php": "~8.4.1 || ~8.5.0 || ~8.6.0",
                 "psr/container": "^2.0",
                 "psr/http-client": "^1.0",
                 "psr/http-factory": "^1.1",
@@ -198,8 +199,8 @@
                 "issues": "https://github.com/common-doc/commondoc/issues",
                 "source": "https://github.com/common-doc/commondoc/tree/1.0.x"
             },
-            "time": "2026-11-13T01:24:23+00:00",
-            "published-time": "2026-11-13T01:39:59+00:00"
+            "time": "2026-11-13T02:28:32+00:00",
+            "published-time": "2026-11-13T02:28:37+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
