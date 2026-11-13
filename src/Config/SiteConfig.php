@@ -56,6 +56,7 @@ final readonly class SiteConfig
      * @param non-empty-string $hostname
      * @param array<string, non-empty-string> $templateMap
      */
+    // @mago-expect lint:excessive-parameter-list - accepted: the promoted properties are the required top-level keys of site-config.schema.json, so the count is fixed by the schema rather than by this class.
     public function __construct(
         string $organization,
         string $tokenEnvVar,
