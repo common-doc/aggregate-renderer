@@ -14,10 +14,10 @@ namespace CommonDocTest\Aggregate;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Console\BuildCommand;
-use CommonDoc\Aggregate\Discovery\DiscoveryFailed;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
 use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
@@ -92,7 +92,7 @@ final class BuildCommandTest extends TestCase
         $projects
             ->method('all')
             ->willThrowException(
-                DiscoveryFailed::missingToken('COMMONDOC_TOKEN'),
+                DiscoveryException::missingToken('COMMONDOC_TOKEN'),
             );
 
         $discovery = $this->createStub(ProjectSourceFactoryInterface::class);

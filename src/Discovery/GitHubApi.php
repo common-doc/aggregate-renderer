@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Discovery;
 
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use InvalidArgumentException;
 use JsonException;
 use Psr\Http\Client\ClientExceptionInterface;
@@ -62,7 +63,7 @@ final readonly class GitHubApi
     /**
      * @return list<array<string, mixed>>
      *
-     * @throws DiscoveryFailed When the body is not a JSON array of objects
+     * @throws DiscoveryException When the body is not a JSON array of objects
      */
     private static function objects(string $body, string $address): array
     {
@@ -70,15 +71,15 @@ final readonly class GitHubApi
             /** @var mixed $decoded */
             $decoded = json_decode($body, associative: true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $malformed) {
-            throw DiscoveryFailed::unavailable($address, 'its answer is not JSON.', $malformed);
+            throw DiscoveryException::unavailable($address, 'its answer is not JSON.', $malformed);
         }
 
         if (! is_array($decoded)) {
-            throw DiscoveryFailed::unavailable($address, 'its answer is not a JSON array.');
+            throw DiscoveryException::unavailable($address, 'its answer is not a JSON array.');
         }
 
         if ([] !== array_filter($decoded, static fn(mixed $entry): bool => ! is_array($entry))) {
-            throw DiscoveryFailed::unavailable($address, 'its answer is not a JSON array of objects.');
+            throw DiscoveryException::unavailable($address, 'its answer is not a JSON array of objects.');
         }
 
         /** @var list<array<string, mixed>> */
@@ -90,7 +91,7 @@ final readonly class GitHubApi
      *
      * @return list<array<string, mixed>>|null Null when the address is absent
      *
-     * @throws DiscoveryFailed When the answer is an error status or is not a JSON array of objects
+     * @throws DiscoveryException When the answer is an error status or is not a JSON array of objects
      */
     public function find(string $address): ?array
     {
@@ -100,14 +101,14 @@ final readonly class GitHubApi
     /**
      * @return list<array<string, mixed>>
      *
-     * @throws DiscoveryFailed When the answer is an error status or is not a JSON array of objects
+     * @throws DiscoveryException When the answer is an error status or is not a JSON array of objects
      */
     public function get(string $address): array
     {
         $objects = $this->answer($address);
 
         if (null === $objects) {
-            throw DiscoveryFailed::unavailable($address, 'it answered with status 404.');
+            throw DiscoveryException::unavailable($address, 'it answered with status 404.');
         }
 
         return $objects;
@@ -116,7 +117,7 @@ final readonly class GitHubApi
     /**
      * @return list<array<string, mixed>>|null Null when the address is absent
      *
-     * @throws DiscoveryFailed When the answer is an error status or is not a JSON array of objects
+     * @throws DiscoveryException When the answer is an error status or is not a JSON array of objects
      */
     private function answer(string $address): ?array
     {
@@ -127,19 +128,19 @@ final readonly class GitHubApi
                 ->withHeader('Authorization', self::AUTHORIZATION . $this->token->reveal())
                 ->withHeader('User-Agent', self::USER_AGENT);
         } catch (InvalidArgumentException $unbuildable) {
-            throw DiscoveryFailed::unavailable($address, 'the request could not be built.', $unbuildable);
+            throw DiscoveryException::unavailable($address, 'the request could not be built.', $unbuildable);
         }
 
         try {
             $response = $this->client->sendRequest($request);
         } catch (ClientExceptionInterface $failure) {
-            throw DiscoveryFailed::unavailable($address, 'the request failed in transport.', $failure);
+            throw DiscoveryException::unavailable($address, 'the request failed in transport.', $failure);
         }
 
         $status = $response->getStatusCode();
 
         if (self::UNAUTHORIZED === $status) {
-            throw DiscoveryFailed::rejectedToken($address);
+            throw DiscoveryException::rejectedToken($address);
         }
 
         if (self::NOT_FOUND === $status) {
@@ -147,7 +148,7 @@ final readonly class GitHubApi
         }
 
         if (self::OK !== $status) {
-            throw DiscoveryFailed::unavailable(
+            throw DiscoveryException::unavailable(
                 $address,
                 sprintf('it answered with status %d.', $status),
             );

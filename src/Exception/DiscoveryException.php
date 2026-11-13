@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Discovery;
+namespace CommonDoc\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
 use RuntimeException;
@@ -30,7 +30,7 @@ use function sprintf;
  * Nothing in a message or a previous exception carries the token itself. The environment variable
  * name is printable; the value never is.
  */
-final class DiscoveryFailed extends RuntimeException
+final class DiscoveryException extends RuntimeException
 {
     private function __construct(
         public readonly ReasonCode $reasonCode,

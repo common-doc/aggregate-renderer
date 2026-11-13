@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Discovery;
 
+use CommonDoc\Aggregate\Exception\DiscoveryException;
+
 use function getenv;
 use function trim;
 
@@ -37,7 +39,7 @@ final readonly class Token
     /**
      * @return non-empty-string
      *
-     * @throws DiscoveryFailed When the variable is unset or carries nothing
+     * @throws DiscoveryException When the variable is unset or carries nothing
      */
     public function reveal(): string
     {
@@ -45,7 +47,7 @@ final readonly class Token
         $token = false === $value ? '' : trim($value);
 
         if ('' === $token) {
-            throw DiscoveryFailed::missingToken($this->envVar);
+            throw DiscoveryException::missingToken($this->envVar);
         }
 
         return $token;

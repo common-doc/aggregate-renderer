@@ -15,8 +15,8 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Discovery;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
-use CommonDoc\Aggregate\Discovery\DiscoveryFailed;
 use CommonDoc\Aggregate\Discovery\Token;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -61,7 +61,7 @@ final class TokenTest extends TestCase
     {
         $token = new Token(self::VARIABLE);
 
-        $this->expectException(DiscoveryFailed::class);
+        $this->expectException(DiscoveryException::class);
         $this->expectExceptionMessage(
             'The environment variable "'
                 . self::VARIABLE
@@ -78,7 +78,7 @@ final class TokenTest extends TestCase
 
         $token = new Token(self::VARIABLE);
 
-        $this->expectException(DiscoveryFailed::class);
+        $this->expectException(DiscoveryException::class);
         $this->expectExceptionCode(0);
 
         $token->reveal();
@@ -93,7 +93,7 @@ final class TokenTest extends TestCase
             new Token(self::VARIABLE)->reveal();
 
             static::fail('A whitespace-only variable must not produce a token.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertSame(ReasonCode::MissingToken, $failed->reasonCode);
         }
     }

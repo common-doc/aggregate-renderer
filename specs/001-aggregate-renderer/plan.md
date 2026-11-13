@@ -133,12 +133,13 @@ src/
 ├── Console/
 │   └── BuildCommand.php                # site:build, human summary or --json
 ├── Discovery/
-│   ├── DiscoveryFailed.php             # Discovery failure with a reason code
 │   ├── GitHubProjectSource.php         # Org repositories and doc-target property
 │   ├── Project.php                     # Readonly discovered project
 │   ├── ProjectSourceInterface.php      # all(): list<Project>
 │   ├── SitePath.php                    # Derives a site path from a repository name
 │   └── Token.php                       # Reads the token from its environment variable at use
+├── Exception/
+│   └── DiscoveryException.php          # Discovery failure with a reason code
 ├── Output/
 │   ├── CnameFile.php                   # Writes and verifies the site address file
 │   └── OutputTree.php                  # Resets, writes and reads output paths

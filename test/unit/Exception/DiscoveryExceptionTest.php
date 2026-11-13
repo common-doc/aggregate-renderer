@@ -12,26 +12,26 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDocTest\Aggregate\Discovery;
+namespace CommonDocTest\Aggregate\Exception;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
-use CommonDoc\Aggregate\Discovery\DiscoveryFailed;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
-#[CoversClass(DiscoveryFailed::class)]
-#[CoversMethod(DiscoveryFailed::class, 'missingToken')]
-#[CoversMethod(DiscoveryFailed::class, 'rejectedToken')]
-#[CoversMethod(DiscoveryFailed::class, 'unavailable')]
-final class DiscoveryFailedTest extends TestCase
+#[CoversClass(DiscoveryException::class)]
+#[CoversMethod(DiscoveryException::class, 'missingToken')]
+#[CoversMethod(DiscoveryException::class, 'rejectedToken')]
+#[CoversMethod(DiscoveryException::class, 'unavailable')]
+final class DiscoveryExceptionTest extends TestCase
 {
     #[Test]
     public function namesTheMissingVariableWithoutNamingAValue(): void
     {
-        $failed = DiscoveryFailed::missingToken('COMMONDOC_TOKEN');
+        $failed = DiscoveryException::missingToken('COMMONDOC_TOKEN');
 
         static::assertSame(ReasonCode::MissingToken, $failed->reasonCode);
         static::assertSame(
@@ -44,7 +44,7 @@ final class DiscoveryFailedTest extends TestCase
     public function recordsAnUnreachableBoundaryWithItsCause(): void
     {
         $cause  = new RuntimeException('the transport refused the connection');
-        $failed = DiscoveryFailed::unavailable('https://api.github.com', 'it answered with status 500.', $cause);
+        $failed = DiscoveryException::unavailable('https://api.github.com', 'it answered with status 500.', $cause);
 
         static::assertSame(ReasonCode::DiscoveryUnavailable, $failed->reasonCode);
         static::assertSame(
@@ -57,7 +57,7 @@ final class DiscoveryFailedTest extends TestCase
     #[Test]
     public function recordsAnUnreachableBoundaryWithoutACause(): void
     {
-        $failed = DiscoveryFailed::unavailable('https://api.github.com', 'its answer is not JSON.');
+        $failed = DiscoveryException::unavailable('https://api.github.com', 'its answer is not JSON.');
 
         static::assertNull($failed->getPrevious());
     }
@@ -65,7 +65,7 @@ final class DiscoveryFailedTest extends TestCase
     #[Test]
     public function recordsARejectedCredential(): void
     {
-        $failed = DiscoveryFailed::rejectedToken('https://api.github.com/orgs/common-doc/repos');
+        $failed = DiscoveryException::rejectedToken('https://api.github.com/orgs/common-doc/repos');
 
         static::assertSame(ReasonCode::RejectedToken, $failed->reasonCode);
         static::assertSame(

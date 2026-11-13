@@ -15,11 +15,11 @@ declare(strict_types=1);
 namespace CommonDocTestIntegration\Aggregate\Discovery;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
-use CommonDoc\Aggregate\Discovery\DiscoveryFailed;
 use CommonDoc\Aggregate\Discovery\GitHubApi;
 use CommonDoc\Aggregate\Discovery\GitHubProjectSource;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Discovery\Token;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use JsonException;
 use Laminas\Diactoros\RequestFactory;
 use Laminas\Diactoros\Response;
@@ -136,7 +136,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('A body that is not a JSON array must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertStringContainsString('not a JSON array', $failed->getMessage());
         }
     }
@@ -153,7 +153,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('A body that is not JSON must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertSame(ReasonCode::DiscoveryUnavailable, $failed->reasonCode);
             static::assertStringContainsString('its answer is not JSON', $failed->getMessage());
             static::assertInstanceOf(JsonException::class, $failed->getPrevious());
@@ -172,7 +172,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('An entry that is not an object must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertStringContainsString('not a JSON array of objects', $failed->getMessage());
         }
     }
@@ -189,7 +189,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('An error status must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertSame(ReasonCode::DiscoveryUnavailable, $failed->reasonCode);
             static::assertStringContainsString('status 500', $failed->getMessage());
         }
@@ -209,7 +209,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('A refused credential must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertSame(ReasonCode::RejectedToken, $failed->reasonCode);
             static::assertStringNotContainsString(self::BEARER, $failed->getMessage());
             static::assertCount(1, $client->sent);
@@ -230,7 +230,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('A repository without a name must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertStringContainsString('carries no "name"', $failed->getMessage());
         }
     }
@@ -249,7 +249,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('A repository without an owner must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertStringContainsString('carries no owner', $failed->getMessage());
         }
     }
@@ -265,7 +265,7 @@ final class GitHubProjectSourceTest extends TestCase
             $this->source($client)->all();
 
             static::fail('A transport failure must block the run.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertSame(ReasonCode::DiscoveryUnavailable, $failed->reasonCode);
             static::assertSame($cause, $failed->getPrevious());
             static::assertStringContainsString('failed in transport', $failed->getMessage());
@@ -284,7 +284,7 @@ final class GitHubProjectSourceTest extends TestCase
             $source->all();
 
             static::fail('A missing token must block the run before any request.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertSame(ReasonCode::MissingToken, $failed->reasonCode);
             static::assertCount(0, $client->sent);
         }

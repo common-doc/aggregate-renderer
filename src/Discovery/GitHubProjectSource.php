@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Discovery;
 
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use InvalidArgumentException;
 use Override;
 
@@ -53,7 +54,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
     /**
      * @return list<Project>
      *
-     * @throws DiscoveryFailed When no token is configured or the boundary refuses the run
+     * @throws DiscoveryException When no token is configured or the boundary refuses the run
      * @throws InvalidArgumentException When a repository name does not derive a site path
      */
     #[Override]
@@ -78,7 +79,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
      *
      * @param array<string, mixed> $repository
      *
-     * @throws DiscoveryFailed When the boundary is unreachable or refuses the token
+     * @throws DiscoveryException When the boundary is unreachable or refuses the token
      */
     private function docTarget(array $repository): ?string
     {
@@ -101,7 +102,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
     /**
      * @param array<string, mixed> $repository
      *
-     * @throws DiscoveryFailed When the repository carries no owner
+     * @throws DiscoveryException When the repository carries no owner
      */
     private function owner(array $repository): string
     {
@@ -109,7 +110,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
         $owner = $repository['owner'] ?? null;
 
         if (! is_array($owner)) {
-            throw DiscoveryFailed::unavailable(
+            throw DiscoveryException::unavailable(
                 $this->endpoint,
                 'a repository in the listing carries no owner.',
             );
@@ -122,7 +123,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
     /**
      * @return list<array<string, mixed>>
      *
-     * @throws DiscoveryFailed When the page is unreachable or refuses the token
+     * @throws DiscoveryException When the page is unreachable or refuses the token
      */
     private function page(int $page): array
     {
@@ -140,7 +141,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
     /**
      * @param array<string, mixed> $repository
      *
-     * @throws DiscoveryFailed When the listing entry names no repository
+     * @throws DiscoveryException When the listing entry names no repository
      * @throws InvalidArgumentException When the repository name does not derive a site path
      */
     private function project(array $repository): ?Project
@@ -164,7 +165,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
     /**
      * @return list<array<string, mixed>>
      *
-     * @throws DiscoveryFailed When a page of the listing cannot be read
+     * @throws DiscoveryException When a page of the listing cannot be read
      */
     private function repositories(): array
     {
@@ -183,7 +184,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
     /**
      * @param array<string, mixed> $object
      *
-     * @throws DiscoveryFailed When the key is absent or is not a string
+     * @throws DiscoveryException When the key is absent or is not a string
      */
     private function requiredString(array $object, string $key): string
     {
@@ -191,7 +192,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
         $value = $object[$key] ?? null;
 
         if (! is_string($value) || '' === $value) {
-            throw DiscoveryFailed::unavailable(
+            throw DiscoveryException::unavailable(
                 $this->endpoint,
                 sprintf('a repository in the listing carries no "%s".', $key),
             );

@@ -17,7 +17,7 @@ namespace CommonDoc\Aggregate\Console;
 use CommonDoc\Aggregate\Build\BuildReport;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
-use CommonDoc\Aggregate\Discovery\DiscoveryFailed;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use CommonDoc\Aggregate\Exception\MissingCnameException;
 use CommonDoc\Aggregate\Report\ReportFile;
@@ -117,7 +117,7 @@ final class BuildCommand extends Command
 
         try {
             $report = $this->builds->create(config: $config)->build(config: $config);
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             $this->errorsOf($output)->writeln(sprintf('<error>%s</error>', $failed->getMessage()));
 
             return self::EXIT_BLOCKED;

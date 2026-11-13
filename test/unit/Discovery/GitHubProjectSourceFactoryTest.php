@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Discovery;
 
-use CommonDoc\Aggregate\Discovery\DiscoveryFailed;
 use CommonDoc\Aggregate\Discovery\GitHubProjectSourceFactory;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use CommonDocTest\Aggregate\Support\Config;
 use Laminas\Diactoros\RequestFactory;
 use Laminas\Diactoros\Response;
@@ -73,7 +73,7 @@ final class GitHubProjectSourceFactoryTest extends TestCase
             $source->all();
 
             static::fail('A source without a token must not reach the boundary.');
-        } catch (DiscoveryFailed $failed) {
+        } catch (DiscoveryException $failed) {
             static::assertStringContainsString(self::TOKEN_VARIABLE, $failed->getMessage());
         }
     }
