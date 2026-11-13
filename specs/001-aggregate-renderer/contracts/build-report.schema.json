@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://common-doc.github.io/aggregate-renderer/build-report.schema.json",
+  "title": "Aggregate renderer build report",
+  "description": "Shape of the report written to output.reportPath. The publish workflow consumes this file, so every field named here is settled and no field may be renamed without a workflow change.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["exitCode", "totals", "projects"],
+  "properties": {
+    "exitCode": {
+      "type": "integer",
+      "enum": [0, 1, 2],
+      "description": "Equal to the process exit code. 0 all projects complete, 1 at least one project partial or failed, 2 blocked before rendering."
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ok", "partial", "failed", "skipped", "pages"],
+      "properties": {
+        "ok": { "type": "integer", "minimum": 0 },
+        "partial": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "pages": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "projects": {
+      "type": "array",
+      "description": "One entry per discovered project, ordered by slug.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["slug", "status", "errors"],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Site path of the project: repository name, lowercased, separators collapsed to a single hyphen."
+          },
+          "status": {
+            "type": "string",
+            "enum": ["ok", "partial", "failed", "skipped"]
+          },
+          "versions": {
+            "type": "array",
+            "description": "Versions published for this project, ordered by version segment.",
+            "items": { "type": "string", "pattern": "^\\d+\\.\\d+(\\.\\d+)?$" }
+          },
+          "pages": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Pages rendered for this project. Zero when the project status is failed or skipped."
+          },
+          "errors": {
+            "type": "array",
+            "description": "Reasons recorded for this project, ordered by reasonCode.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["reasonCode"],
+              "properties": {
+                "reasonCode": {
+                  "type": "string",
+                  "enum": [
+                    "invalid-site-config",
+                    "missing-token",
+                    "rejected-token",
+                    "discovery-unavailable",
+                    "duplicate-slug",
+                    "duplicate-version",
+                    "duplicate-page-address",
+                    "no-versions",
+                    "missing-doc-directory",
+                    "source-unavailable",
+                    "render-failed",
+                    "write-failed",
+                    "missing-cname"
+                  ]
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Human-readable detail naming the file, key or page at fault. Never contains a token."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

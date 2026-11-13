@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://common-doc.github.io/aggregate-renderer/site-config.schema.json",
+  "title": "Aggregate renderer site configuration",
+  "description": "Shape of site.json at the workspace root, the single configuration file the build reads.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["organization", "output", "site"],
+  "properties": {
+    "organization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "tokenEnvVar"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Organization whose repositories are scanned for the doc-target property."
+        },
+        "tokenEnvVar": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "Name of the environment variable holding the token. The token value is never part of this file."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["directory", "reportPath"],
+      "properties": {
+        "directory": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Directory holding the aggregate output tree, relative to the configuration file or absolute."
+        },
+        "reportPath": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Path of the build report JSON, relative to the configuration file or absolute."
+        },
+        "cacheDirectory": {
+          "type": "string",
+          "minLength": 1,
+          "default": ".cache/multi-repo",
+          "description": "Directory holding reused rendering work, relative to the configuration file or absolute."
+        }
+      }
+    },
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hostname"],
+      "properties": {
+        "hostname": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$",
+          "description": "Bare host used for every public address and written to the site address file. No scheme, no slash."
+        }
+      }
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": ["ref", "tree"],
+          "default": "ref",
+          "description": "Version decision implementation. Both produce identical output for the same corpus."
+        }
+      }
+    },
+    "templates": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "map": {
+          "type": "object",
+          "description": "Template name to file path. A site replaces commondoc::document here with no code change. Names absent from the map use the shared renderer default.",
+          "propertyNames": { "type": "string", "minLength": 1 },
+          "additionalProperties": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}
