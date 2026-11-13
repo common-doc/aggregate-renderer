@@ -65,7 +65,7 @@ final readonly class Target
     {
         $bySitePath = strcmp($left->project->sitePath, $right->project->sitePath);
 
-        if ($bySitePath !== 0) {
+        if (0 !== $bySitePath) {
             return $bySitePath;
         }
 
@@ -84,7 +84,7 @@ final readonly class Target
         for ($index = 0; $index < $segments; $index++) {
             $bySegment = (int) ($leftSegments[$index] ?? '0') <=> (int) ($rightSegments[$index] ?? '0');
 
-            if ($bySegment !== 0) {
+            if (0 !== $bySegment) {
                 return $bySegment;
             }
         }

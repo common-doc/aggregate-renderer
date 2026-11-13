@@ -16,12 +16,11 @@ namespace CommonDoc\Aggregate\Version;
 
 use CommonDoc\Aggregate\Discovery\Project;
 use InvalidArgumentException;
+use Override;
 
 use function in_array;
 use function preg_match;
 use function usort;
-
-use Override;
 
 /**
  * Resolves the version list from repository reference names.
@@ -36,7 +35,9 @@ final readonly class RefStrategy implements StrategyInterface
 
     private const string BRANCH_PATTERN = '~^(\d+\.\d+)\.x$~';
 
-    public function __construct(private Project $project) {}
+    public function __construct(
+        private Project $project,
+    ) {}
 
     /**
      * @param list<non-empty-string> $candidates
@@ -53,11 +54,11 @@ final readonly class RefStrategy implements StrategyInterface
         foreach ($candidates as $candidate) {
             $version = $this->versionOf($candidate);
 
-            if ($version === null) {
+            if (null === $version) {
                 continue;
             }
 
-            if (! in_array($version, $versions, true)) {
+            if (! in_array($version, $versions, strict: true)) {
                 $versions[] = $version;
             }
         }
@@ -76,16 +77,20 @@ final readonly class RefStrategy implements StrategyInterface
     /**
      * @return non-empty-string|null
      */
-    private function versionOf(string $candidate): string|null
+    private function versionOf(string $candidate): ?string
     {
         $matches = [];
 
         if (preg_match(self::TAG_PATTERN, $candidate, $matches) === 1) {
-            return isset($matches[1]) && $matches[1] !== '' ? $matches[1] : null;
+            $tag = $matches[1] ?? '';
+
+            return '' === $tag ? null : $tag;
         }
 
         if (preg_match(self::BRANCH_PATTERN, $candidate, $matches) === 1) {
-            return isset($matches[1]) && $matches[1] !== '' ? $matches[1] : null;
+            $branch = $matches[1] ?? '';
+
+            return '' === $branch ? null : $branch;
         }
 
         return null;

@@ -42,9 +42,11 @@ enum Strategy: string
      */
     public static function fromConfig(string $configured): self
     {
-        return self::tryFrom($configured) ?? throw InvalidSiteConfig::at(
-            'versions.strategy',
-            sprintf('"%s" is not one of "ref" or "tree".', $configured),
+        return (
+            self::tryFrom($configured) ?? throw InvalidSiteConfig::at(
+                'versions.strategy',
+                sprintf('"%s" is not one of "ref" or "tree".', $configured),
+            )
         );
     }
 }

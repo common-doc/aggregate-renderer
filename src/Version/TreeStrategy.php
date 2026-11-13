@@ -16,12 +16,11 @@ namespace CommonDoc\Aggregate\Version;
 
 use CommonDoc\Aggregate\Discovery\Project;
 use InvalidArgumentException;
+use Override;
 
 use function in_array;
 use function preg_match;
 use function usort;
-
-use Override;
 
 /**
  * Resolves the version list from directory names inside the documentation directory.
@@ -33,7 +32,9 @@ final readonly class TreeStrategy implements StrategyInterface
 {
     private const string DIRECTORY_PATTERN = '~^(\d+\.\d+(?:\.\d+)?)$~';
 
-    public function __construct(private Project $project) {}
+    public function __construct(
+        private Project $project,
+    ) {}
 
     /**
      * @param list<non-empty-string> $candidates
@@ -52,7 +53,7 @@ final readonly class TreeStrategy implements StrategyInterface
                 continue;
             }
 
-            if (! in_array($candidate, $versions, true)) {
+            if (! in_array($candidate, $versions, strict: true)) {
                 $versions[] = $candidate;
             }
         }

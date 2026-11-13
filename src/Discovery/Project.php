@@ -72,7 +72,7 @@ final readonly class Project
      */
     private static function requireValue(string $value, string $field): string
     {
-        if ($value === '') {
+        if ('' === $value) {
             throw new InvalidArgumentException(
                 sprintf('A discovered project requires a non-empty %s.', $field),
             );
