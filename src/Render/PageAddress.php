@@ -34,8 +34,8 @@ use function substr;
 final readonly class PageAddress
 {
     /**
-     * @param non-empty-string $file    Output file, relative to the output directory
-     * @param non-empty-string $address Public address that the file serves
+     * @param string $file    Output file, relative to the output directory, checked below
+     * @param string $address Public address that the file serves, checked below
      *
      * @throws InvalidArgumentException When the pair cannot serve one page
      */

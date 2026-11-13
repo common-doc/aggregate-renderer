@@ -43,7 +43,7 @@ final readonly class PageAddressFactory
     private string $hostname;
 
     /**
-     * @param non-empty-string $hostname Bare host name, without a scheme or a trailing slash
+     * @param string $hostname Bare host name, checked below rather than assumed
      *
      * @throws InvalidArgumentException When the host name cannot address a site
      */
