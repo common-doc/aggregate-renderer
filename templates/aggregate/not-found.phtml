@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * This file is part of the common-doc/aggregate-renderer package.
+ *
+ * Copyright (c) 2026 Joey Smith <jsmith@webinertia.net>
+ * and contributors.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * The page served for an address that resolves to nothing. It is written as `404.html` at the root of
+ * the tree, because that is the file a static host looks for, and it is a full page like every other.
+ */
+?>
+<?php $this->headTitle('Not found'); ?>
+<main class="not-found">
+    <h1>Not found</h1>
+    <p>There is no page at this address. Visit the <a href="/">site index</a> to browse the published documentation.</p>
+</main>

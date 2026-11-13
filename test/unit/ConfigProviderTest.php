@@ -14,27 +14,86 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate;
 
+use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
+use CommonDoc\Aggregate\Build\SiteBuildFactory;
+use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
+use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\ConfigProvider;
+use CommonDoc\Aggregate\Console\BuildCommand;
+use CommonDoc\Aggregate\Console\Container\BuildCommandFactory;
+use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Render\SiteRendererFactory;
+use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
+use CommonDoc\Aggregate\Render\ViewFactory;
+use CommonDoc\Aggregate\Report\ReportFileFactory;
+use CommonDoc\Aggregate\Report\ReportFileFactoryInterface;
+use CommonDoc\Aggregate\Source\SourceFactory;
+use CommonDoc\Aggregate\Source\SourceFactoryInterface;
+use CommonDoc\Aggregate\Version\StrategyFactory;
+use Laminas\ServiceManager\Factory\InvokableFactory;
+use Laminas\ServiceManager\ServiceManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function dirname;
+
 #[CoversClass(ConfigProvider::class)]
 #[CoversMethod(ConfigProvider::class, '__invoke')]
 #[CoversMethod(ConfigProvider::class, 'getDependencies')]
+#[CoversMethod(ConfigProvider::class, 'getViewConfig')]
 final class ConfigProviderTest extends TestCase
 {
     #[Test]
-    public function providesAnEmptyDependencyFactoryMap(): void
+    public function buildsTheCommandThroughARealContainerOnceAProjectSourceIsRegistered(): void
     {
-        $expected = [
-            'dependencies' => [
-                'factories' => [],
-            ],
-        ];
+        $container = new ServiceManager(new ConfigProvider()->getDependencies());
+        $container->setService(
+            ProjectSourceInterface::class,
+            $this->createStub(ProjectSourceInterface::class),
+        );
 
-        static::assertSame($expected, new ConfigProvider()->__invoke());
+        static::assertInstanceOf(BuildCommand::class, $container->get(BuildCommand::class));
+    }
+
+    #[Test]
+    public function contributesEveryMappedTemplateAsAnExistingFile(): void
+    {
+        foreach (new ConfigProvider()->getViewConfig()['map'] as $name => $path) {
+            static::assertFileExists($path, $name);
+        }
+    }
+
+    #[Test]
+    public function mergesDependenciesAndTemplatesWhenInvoked(): void
+    {
+        $provider = new ConfigProvider();
+
+        static::assertSame(
+            [
+                'dependencies' => $provider->getDependencies(),
+                'templates'    => $provider->getViewConfig(),
+            ],
+            $provider->__invoke(),
+        );
+    }
+
+    #[Test]
+    public function replacesTheDocumentAddressAndSuppliesTheLayout(): void
+    {
+        $views = new ConfigProvider()->getViewConfig();
+
+        static::assertSame(ViewFactory::defaults(), $views['map']);
+        static::assertSame('aggregate::layout', $views['layout']);
+        static::assertSame(
+            dirname(
+                path  : __DIR__,
+                levels: 2,
+            )
+                . '/templates/aggregate/document.phtml',
+            $views['map'][ViewFactory::DOCUMENT],
+        );
     }
 
     #[Test]
@@ -42,7 +101,21 @@ final class ConfigProviderTest extends TestCase
     {
         static::assertSame(
             [
-                'factories' => [],
+                'aliases'   => [
+                    ReportFileFactoryInterface::class   => ReportFileFactory::class,
+                    SiteBuildFactoryInterface::class    => SiteBuildFactory::class,
+                    SiteRendererFactoryInterface::class => SiteRendererFactory::class,
+                    SourceFactoryInterface::class       => SourceFactory::class,
+                ],
+                'factories' => [
+                    BuildCommand::class        => BuildCommandFactory::class,
+                    ReportFileFactory::class   => InvokableFactory::class,
+                    SiteBuildFactory::class    => SiteBuildFactoryFactory::class,
+                    SiteConfigReader::class    => InvokableFactory::class,
+                    SiteRendererFactory::class => InvokableFactory::class,
+                    SourceFactory::class       => InvokableFactory::class,
+                    StrategyFactory::class     => InvokableFactory::class,
+                ],
             ],
             new ConfigProvider()->getDependencies(),
         );

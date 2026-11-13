@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * This file is part of the common-doc/aggregate-renderer package.
+ *
+ * Copyright (c) 2026 Joey Smith <jsmith@webinertia.net>
+ * and contributors.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * The shell for one published page.
+ *
+ * The doctype, the head, the title and the site chrome are here and nowhere else, so the document
+ * body does not have to know it is inside a page. The view renderer writes the body render into
+ * `content`, so this template reads that and nothing else: it must not assume a page, because the
+ * site index and the not-found page wrap here too.
+ *
+ * @var string $content
+ */
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <?= $this->headTitle()->setSeparator(' | ') ?>
+</head>
+<body class="aggregate">
+    <header class="site-header">
+        <a class="site-home" href="/">Documentation</a>
+    </header>
+    <?= $this->content ?>
+    <footer class="site-footer">
+        <p>Built by common-doc/aggregate-renderer.</p>
+    </footer>
+</body>
+</html>
