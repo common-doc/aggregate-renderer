@@ -20,7 +20,9 @@ use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Console\BuildCommand;
 use CommonDoc\Aggregate\Console\Container\BuildCommandFactory;
-use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Discovery\Container\GitHubProjectSourceFactoryFactory;
+use CommonDoc\Aggregate\Discovery\GitHubProjectSourceFactory;
+use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\ViewFactory;
@@ -39,9 +41,11 @@ use Laminas\ServiceManager\Factory\InvokableFactory;
  *
  * Everything registered here is either configuration-free or a factory that needs the configuration
  * to build its product, because the output tree, the git source and the renderer all depend on
- * values that only exist once `site.json` has been read. Discovery is deliberately absent: this
- * package does not yet ship a project source, so a consumer must register one against
- * {@see ProjectSourceInterface} before the command can be built.
+ * values that only exist once `site.json` has been read. Discovery follows the same rule: the
+ * organization it lists and the variable holding the token live in the configuration, so the
+ * container supplies the HTTP seams and {@see ProjectSourceFactoryInterface} turns them into a
+ * source per build. The PSR-18 client is the one service this package cannot register for a
+ * consumer, so a site that never builds still resolves everything else.
  *
  * @internal
  */
@@ -61,19 +65,21 @@ final class ConfigProvider
     {
         return [
             'aliases'   => [
-                ReportFileFactoryInterface::class   => ReportFileFactory::class,
-                SiteBuildFactoryInterface::class    => SiteBuildFactory::class,
-                SiteRendererFactoryInterface::class => SiteRendererFactory::class,
-                SourceFactoryInterface::class       => SourceFactory::class,
+                ProjectSourceFactoryInterface::class => GitHubProjectSourceFactory::class,
+                ReportFileFactoryInterface::class    => ReportFileFactory::class,
+                SiteBuildFactoryInterface::class     => SiteBuildFactory::class,
+                SiteRendererFactoryInterface::class  => SiteRendererFactory::class,
+                SourceFactoryInterface::class        => SourceFactory::class,
             ],
             'factories' => [
-                BuildCommand::class        => BuildCommandFactory::class,
-                ReportFileFactory::class   => InvokableFactory::class,
-                SiteBuildFactory::class    => SiteBuildFactoryFactory::class,
-                SiteConfigReader::class    => InvokableFactory::class,
-                SiteRendererFactory::class => InvokableFactory::class,
-                SourceFactory::class       => InvokableFactory::class,
-                StrategyFactory::class     => InvokableFactory::class,
+                BuildCommand::class               => BuildCommandFactory::class,
+                GitHubProjectSourceFactory::class => GitHubProjectSourceFactoryFactory::class,
+                ReportFileFactory::class          => InvokableFactory::class,
+                SiteBuildFactory::class           => SiteBuildFactoryFactory::class,
+                SiteConfigReader::class           => InvokableFactory::class,
+                SiteRendererFactory::class        => InvokableFactory::class,
+                SourceFactory::class              => InvokableFactory::class,
+                StrategyFactory::class            => InvokableFactory::class,
             ],
         ];
     }

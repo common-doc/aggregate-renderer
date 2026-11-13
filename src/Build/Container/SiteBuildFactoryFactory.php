@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Build\Container;
 
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
-use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
 use CommonDoc\Aggregate\Version\StrategyFactory;
@@ -49,7 +49,7 @@ final readonly class SiteBuildFactoryFactory implements FactoryInterface
         ?array $options = null,
     ): SiteBuildFactory {
         return new SiteBuildFactory(
-            discovery : $container->get(ProjectSourceInterface::class),
+            projects  : $container->get(ProjectSourceFactoryInterface::class),
             sources   : $container->get(SourceFactoryInterface::class),
             strategies: $container->get(StrategyFactory::class),
             renderers : $container->get(SiteRendererFactoryInterface::class),

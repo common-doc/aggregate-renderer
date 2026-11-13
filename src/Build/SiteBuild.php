@@ -7,6 +7,7 @@ namespace CommonDoc\Aggregate\Build;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use CommonDoc\Aggregate\Exception\MissingCnameException;
 use CommonDoc\Aggregate\Output\CnameFile;
 use CommonDoc\Aggregate\Output\OutputTree;
@@ -49,6 +50,7 @@ final readonly class SiteBuild
      * @throws MissingCnameException            When the site address file does not hold the configured hostname
      * @throws RuntimeException            When the output tree or the report cannot be written
      * @throws TemplateExceptionInterface  When a page cannot be rendered
+     * @throws DiscoveryException          When no project could be discovered at all
      */
     public function build(SiteConfig $config): BuildReport
     {

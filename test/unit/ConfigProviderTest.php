@@ -21,7 +21,9 @@ use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\ConfigProvider;
 use CommonDoc\Aggregate\Console\BuildCommand;
 use CommonDoc\Aggregate\Console\Container\BuildCommandFactory;
-use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Discovery\Container\GitHubProjectSourceFactoryFactory;
+use CommonDoc\Aggregate\Discovery\GitHubProjectSourceFactory;
+use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\ViewFactory;
@@ -30,12 +32,15 @@ use CommonDoc\Aggregate\Report\ReportFileFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactory;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
 use CommonDoc\Aggregate\Version\StrategyFactory;
+use Laminas\Diactoros\RequestFactory;
 use Laminas\ServiceManager\Factory\InvokableFactory;
 use Laminas\ServiceManager\ServiceManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
 
 use function dirname;
 
@@ -46,13 +51,11 @@ use function dirname;
 final class ConfigProviderTest extends TestCase
 {
     #[Test]
-    public function buildsTheCommandThroughARealContainerOnceAProjectSourceIsRegistered(): void
+    public function buildsTheCommandThroughARealContainerOnceTheHttpSeamsAreRegistered(): void
     {
         $container = new ServiceManager(new ConfigProvider()->getDependencies());
-        $container->setService(
-            ProjectSourceInterface::class,
-            $this->createStub(ProjectSourceInterface::class),
-        );
+        $container->setService(ClientInterface::class, $this->createStub(ClientInterface::class));
+        $container->setService(RequestFactoryInterface::class, new RequestFactory());
 
         static::assertInstanceOf(BuildCommand::class, $container->get(BuildCommand::class));
     }
@@ -102,19 +105,21 @@ final class ConfigProviderTest extends TestCase
         static::assertSame(
             [
                 'aliases'   => [
-                    ReportFileFactoryInterface::class   => ReportFileFactory::class,
-                    SiteBuildFactoryInterface::class    => SiteBuildFactory::class,
-                    SiteRendererFactoryInterface::class => SiteRendererFactory::class,
-                    SourceFactoryInterface::class       => SourceFactory::class,
+                    ProjectSourceFactoryInterface::class => GitHubProjectSourceFactory::class,
+                    ReportFileFactoryInterface::class    => ReportFileFactory::class,
+                    SiteBuildFactoryInterface::class     => SiteBuildFactory::class,
+                    SiteRendererFactoryInterface::class  => SiteRendererFactory::class,
+                    SourceFactoryInterface::class        => SourceFactory::class,
                 ],
                 'factories' => [
-                    BuildCommand::class        => BuildCommandFactory::class,
-                    ReportFileFactory::class   => InvokableFactory::class,
-                    SiteBuildFactory::class    => SiteBuildFactoryFactory::class,
-                    SiteConfigReader::class    => InvokableFactory::class,
-                    SiteRendererFactory::class => InvokableFactory::class,
-                    SourceFactory::class       => InvokableFactory::class,
-                    StrategyFactory::class     => InvokableFactory::class,
+                    BuildCommand::class               => BuildCommandFactory::class,
+                    GitHubProjectSourceFactory::class => GitHubProjectSourceFactoryFactory::class,
+                    ReportFileFactory::class          => InvokableFactory::class,
+                    SiteBuildFactory::class           => SiteBuildFactoryFactory::class,
+                    SiteConfigReader::class           => InvokableFactory::class,
+                    SiteRendererFactory::class        => InvokableFactory::class,
+                    SourceFactory::class              => InvokableFactory::class,
+                    StrategyFactory::class            => InvokableFactory::class,
                 ],
             ],
             new ConfigProvider()->getDependencies(),

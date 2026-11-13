@@ -17,6 +17,7 @@ namespace CommonDoc\Aggregate\Console;
 use CommonDoc\Aggregate\Build\BuildReport;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
+use CommonDoc\Aggregate\Exception\DiscoveryException;
 use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use CommonDoc\Aggregate\Exception\MissingCnameException;
 use CommonDoc\Aggregate\Report\ReportFile;
@@ -42,7 +43,9 @@ use function sprintf;
  *
  * Configuration is read before anything is built, so an unusable `site.json` exits 2 with a diagnostic
  * and no report is written: a report describes a build, and a build that never started has nothing to
- * describe. Every other outcome is the report's own exit code, which is why the command never decides
+ * describe. Discovery is the second thing that can block a run before rendering, for the same reason
+ * and with the same exit code: no token and no boundary mean no project was read, so there is nothing
+ * to report. Every other outcome is the report's own exit code, which is why the command never decides
  * an exit code of its own.
  */
 #[AsCommand(name: self::NAME, description: 'Render the aggregate documentation site.')]
@@ -112,7 +115,13 @@ final class BuildCommand extends Command
             return self::EXIT_BLOCKED;
         }
 
-        $report = $this->builds->create(config: $config)->build(config: $config);
+        try {
+            $report = $this->builds->create(config: $config)->build(config: $config);
+        } catch (DiscoveryException $failed) {
+            $this->errorsOf($output)->writeln(sprintf('<error>%s</error>', $failed->getMessage()));
+
+            return self::EXIT_BLOCKED;
+        }
 
         if (true === $input->getOption('json')) {
             $this->writeJson($output, $this->reports->create(config: $config), $report);
