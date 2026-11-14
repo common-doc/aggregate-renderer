@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "975fe2fd132b7df0da307434d0ce1d22",
+    "content-hash": "5cb0a9a18f87d40f0308c305a870f975",
     "packages": [
         {
             "name": "brick/math",
@@ -5189,16 +5189,16 @@
         },
         {
             "name": "webware/query-param-router",
-            "version": "1.0.0-alpha.4",
+            "version": "1.0.0-alpha.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/webinertia/query-param-router.git",
-                "reference": "95c4d789b5cfb45c05c33efd270a5f96906980ea"
+                "reference": "835441ce8dfc009df6c6f0f96feea3c549d301ab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/webinertia/query-param-router/zipball/95c4d789b5cfb45c05c33efd270a5f96906980ea",
-                "reference": "95c4d789b5cfb45c05c33efd270a5f96906980ea",
+                "url": "https://api.github.com/repos/webinertia/query-param-router/zipball/835441ce8dfc009df6c6f0f96feea3c549d301ab",
+                "reference": "835441ce8dfc009df6c6f0f96feea3c549d301ab",
                 "shasum": ""
             },
             "require": {
@@ -5216,7 +5216,7 @@
                 "psr/http-server-handler": "^1.0",
                 "roave/backward-compatibility-check": "^8.21.0",
                 "roave/security-advisories": "dev-master",
-                "webware/webware-tools": "^1.0.0-rc.9"
+                "webware/webware-tools": "^1.0.0-rc.14"
             },
             "type": "library",
             "extra": {
@@ -5253,8 +5253,8 @@
                 "issues": "https://github.com/webinertia/query-param-router/issues",
                 "source": "https://github.com/webinertia/query-param-router"
             },
-            "time": "2026-11-07T06:53:52+00:00",
-            "published-time": "2026-11-07T06:54:58+00:00"
+            "time": "2026-11-14T15:10:58+00:00",
+            "published-time": "2026-11-14T15:11:57+00:00"
         },
         {
             "name": "webware/webware-console",
@@ -5459,6 +5459,100 @@
             },
             "time": "2026-10-29T05:30:48+00:00",
             "published-time": "2026-10-29T05:31:45+00:00"
+        },
+        {
+            "name": "webware/webware-navigation",
+            "version": "1.0.0-alpha.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/webinertia/webware-navigation.git",
+                "reference": "fdc364f194e831a19d9280112ab8755470bac047"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/webinertia/webware-navigation/zipball/fdc364f194e831a19d9280112ab8755470bac047",
+                "reference": "fdc364f194e831a19d9280112ab8755470bac047",
+                "shasum": ""
+            },
+            "require": {
+                "laminas/laminas-view": "^3.0",
+                "mezzio/mezzio-router": "^3.15 || ^4.0",
+                "php": "~8.4.1 || ~8.5.0",
+                "psr/container": "^2.0",
+                "psr/http-message": "^2.0",
+                "psr/http-server-handler": "^1.0",
+                "psr/http-server-middleware": "^1.0"
+            },
+            "require-dev": {
+                "infection/infection": "^0.35.0",
+                "laminas/laminas-permissions-acl": "^2.16",
+                "phpbench/phpbench": "^1.7",
+                "phpunit/phpunit": "^13.4.4",
+                "roave/backward-compatibility-check": "^8.21.0",
+                "roave/security-advisories": "dev-master",
+                "webware/webware-core": "^1.0.0-alpha.6",
+                "webware/webware-tools": "^1.0.0-rc.14"
+            },
+            "suggest": {
+                "webware/webware-core": "Only needed to filter navigation by ACL; without it the helper builds with a null ACL and the ACL check is skipped"
+            },
+            "type": "library",
+            "extra": {
+                "laminas": {
+                    "config-provider": "Webware\\Navigation\\ConfigProvider"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Webware\\Navigation\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "WebwareTest\\Navigation\\": "test/unit/",
+                    "WebwareTestIntegration\\Navigation\\": "test/integration/"
+                }
+            },
+            "scripts": {
+                "test-all": [
+                    "@test",
+                    "@test-integration"
+                ],
+                "test": [
+                    "phpunit --no-coverage --colors=always --testsuite \"unit test\""
+                ],
+                "test-coverage": [
+                    "phpunit --colors=always --coverage-clover clover.xml --coverage-html coverage/html --coverage-text"
+                ],
+                "test-integration": [
+                    "phpunit --no-coverage --colors=always --testsuite \"integration test\""
+                ],
+                "mutation-test": [
+                    "infection"
+                ]
+            },
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Joey Smith",
+                    "email": "jsmith@webinertia.net",
+                    "role": "Developer"
+                }
+            ],
+            "description": "ACL-aware navigation middleware, container, and Laminas view helper for webware-* packages",
+            "keywords": [
+                "acl",
+                "mezzio",
+                "navigation",
+                "webware"
+            ],
+            "support": {
+                "source": "https://github.com/webinertia/webware-navigation/tree/1.0.0-alpha.8",
+                "issues": "https://github.com/webinertia/webware-navigation/issues"
+            },
+            "time": "2026-11-14T05:15:42+00:00"
         },
         {
             "name": "webware/webware-theme",
@@ -12724,7 +12818,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "~8.4.1 || ~8.5.0 || ~8.6.0"
+        "php": "~8.4.1 || ~8.5.0 || ~8.6.0",
+        "ext-dom": "*"
     },
     "platform-dev": {},
     "platform-overrides": {
