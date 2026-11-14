@@ -14,10 +14,12 @@ namespace CommonDocTest\Aggregate\Support;
 use Closure;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
+use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
 use CommonDoc\Aggregate\Version\Target;
 
 use function sprintf;
+use function substr;
 
 /**
  * A renderer double that records what the build asked of it.
@@ -27,7 +29,7 @@ use function sprintf;
  */
 final class SiteRenderer implements SiteRendererInterface
 {
-    /** @var list<array{Target, list<non-empty-string>}> */
+    /** @var list<TargetCorpus> */
     public array $rendered = [];
 
     /** @var list<Target> */
@@ -36,12 +38,12 @@ final class SiteRenderer implements SiteRendererInterface
     public int $notFoundPages = 0;
 
     /**
-     * @var Closure(Target, list<non-empty-string>): list<PageResult>
+     * @var Closure(TargetCorpus): list<PageResult>
      */
     private readonly Closure $pages;
 
     /**
-     * @param (Closure(Target, list<non-empty-string>): list<PageResult>)|null $pages
+     * @param (Closure(TargetCorpus): list<PageResult>)|null $pages
      */
     public function __construct(?Closure $pages = null)
     {
@@ -49,21 +51,19 @@ final class SiteRenderer implements SiteRendererInterface
     }
 
     /**
-     * @param list<non-empty-string> $documents
-     *
      * @return list<PageResult>
      */
-    private static function onePagePerDocument(Target $target, array $documents): array
+    private static function onePagePerDocument(TargetCorpus $corpus): array
     {
         $pages = [];
 
-        foreach ($documents as $document) {
+        foreach ($corpus->documents as $document) {
             $pages[] = new PageResult(
                 address   : sprintf(
-                    'https://docs.example.com/%s/%s/%s',
-                    $target->project->sitePath,
-                    $target->version,
-                    $document,
+                    'https://docs.example.com/%s/%s/%s.html',
+                    $corpus->target->project->sitePath,
+                    $corpus->target->version,
+                    substr($document, 0, -3),
                 ),
                 status    : PageStatus::Rendered,
                 reasonCode: null,
@@ -75,15 +75,13 @@ final class SiteRenderer implements SiteRendererInterface
     }
 
     /**
-     * @param list<non-empty-string> $documents
-     *
      * @return list<PageResult>
      */
-    public function render(Target $target, array $documents): array
+    public function render(TargetCorpus $corpus): array
     {
-        $this->rendered[] = [$target, $documents];
+        $this->rendered[] = $corpus;
 
-        return ($this->pages)($target, $documents);
+        return ($this->pages)($corpus);
     }
 
     public function writeNotFoundPage(): void

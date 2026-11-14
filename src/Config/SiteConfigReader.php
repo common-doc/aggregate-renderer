@@ -65,7 +65,7 @@ final class SiteConfigReader
         $output->rejectUnknownKeys(['directory', 'reportPath', 'cacheDirectory']);
 
         $site = $root->object('site');
-        $site->rejectUnknownKeys(['hostname']);
+        $site->rejectUnknownKeys(['hostname', 'navigation']);
 
         $name        = $organization->string('name');
         $tokenEnvVar = $this->tokenVariable($organization->string('tokenEnvVar'));
@@ -91,6 +91,7 @@ final class SiteConfigReader
             $hostname,
             $this->strategy($root),
             $this->templateMap($root, $base),
+            $this->navigation($site),
         );
     }
 
@@ -123,6 +124,37 @@ final class SiteConfigReader
         }
 
         return $decoded;
+    }
+
+    /**
+     * @throws InvalidSiteConfigException When the configured identifier is not a single name
+     */
+    private function navigation(Section $site): NavigationConfig
+    {
+        $navigation = $site->optionalObject('navigation');
+
+        if (null === $navigation) {
+            return new NavigationConfig();
+        }
+
+        $navigation->rejectUnknownKeys(['enabled', 'identifier']);
+
+        $identifier = $navigation->optionalString('identifier') ?? NavigationConfig::DEFAULT_IDENTIFIER;
+
+        if (preg_match(NavigationConfig::IDENTIFIER_PATTERN, $identifier) !== 1) {
+            throw InvalidSiteConfigException::at(
+                'site.navigation.identifier',
+                sprintf(
+                    '"%s" is not a name of letters, digits, hyphens and underscores.',
+                    $identifier,
+                ),
+            );
+        }
+
+        return new NavigationConfig(
+            enabled   : $navigation->optionalBool('enabled') ?? false,
+            identifier: $identifier,
+        );
     }
 
     /**

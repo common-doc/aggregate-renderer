@@ -39,31 +39,31 @@ final class PageAddressFactoryTest extends TestCase
                 '1.0',
                 'index.md',
                 'aggregate-renderer/1.0/index.html',
-                'https://docs.example.org/aggregate-renderer/1.0/',
+                'https://docs.example.org/aggregate-renderer/1.0/index.html',
             ],
             'directory index'         => [
                 '1.0',
                 'guide/index.md',
                 'aggregate-renderer/1.0/guide/index.html',
-                'https://docs.example.org/aggregate-renderer/1.0/guide/',
+                'https://docs.example.org/aggregate-renderer/1.0/guide/index.html',
             ],
             'document in a directory' => [
                 '1.0',
                 'guide/setup.md',
-                'aggregate-renderer/1.0/guide/setup/index.html',
-                'https://docs.example.org/aggregate-renderer/1.0/guide/setup/',
+                'aggregate-renderer/1.0/guide/setup.html',
+                'https://docs.example.org/aggregate-renderer/1.0/guide/setup.html',
             ],
             'deeply nested document'  => [
                 '1.0',
                 'guide/advanced/tuning.md',
-                'aggregate-renderer/1.0/guide/advanced/tuning/index.html',
-                'https://docs.example.org/aggregate-renderer/1.0/guide/advanced/tuning/',
+                'aggregate-renderer/1.0/guide/advanced/tuning.html',
+                'https://docs.example.org/aggregate-renderer/1.0/guide/advanced/tuning.html',
             ],
             'patch version'           => [
                 '1.0.3',
                 'index.md',
                 'aggregate-renderer/1.0.3/index.html',
-                'https://docs.example.org/aggregate-renderer/1.0.3/',
+                'https://docs.example.org/aggregate-renderer/1.0.3/index.html',
             ],
         ];
     }
@@ -74,13 +74,14 @@ final class PageAddressFactoryTest extends TestCase
     public static function unmappableDocumentPaths(): array
     {
         return [
-            'empty'          => [''],
-            'absolute'       => ['/docs/index.md'],
-            'no extension'   => ['index'],
-            'other format'   => ['index.rst'],
-            'escapes upward' => ['guide/../../index.md'],
-            'backslashes'    => ['guide\\setup.md'],
-            'empty segment'  => ['guide//setup.md'],
+            'empty'                 => [''],
+            'absolute'              => ['/docs/index.md'],
+            'no extension'          => ['index'],
+            'other format'          => ['index.rst'],
+            'escapes upward'        => ['guide/../../index.md'],
+            'backslashes'           => ['guide\\setup.md'],
+            'empty segment'         => ['guide//setup.md'],
+            'directory without a file' => ['guide/'],
         ];
     }
 
@@ -98,6 +99,16 @@ final class PageAddressFactoryTest extends TestCase
         static::assertSame($first->address, $second->address);
         static::assertNotSame($first->file, $other->file);
         static::assertNotSame($first->address, $other->address);
+    }
+
+    #[Test]
+    public function keepsTheDocumentNameRatherThanTurningItIntoADirectory(): void
+    {
+        $address = $this->factory()->forDocument($this->target('1.0'), 'guide/setup.md');
+
+        static::assertSame('aggregate-renderer/1.0/guide/setup.html', $address->file);
+        static::assertSame('/aggregate-renderer/1.0/guide/setup.html', $address->path());
+        static::assertFalse(str_ends_with($address->file, '/index.html'));
     }
 
     #[Test]
@@ -120,7 +131,10 @@ final class PageAddressFactoryTest extends TestCase
         $address = $this->factory()->forDocument($this->target('2.1.4'), 'guide/index.md');
 
         static::assertSame('aggregate-renderer/2.1.4/guide/index.html', $address->file);
-        static::assertSame('https://docs.example.org/aggregate-renderer/2.1.4/guide/', $address->address);
+        static::assertSame(
+            'https://docs.example.org/aggregate-renderer/2.1.4/guide/index.html',
+            $address->address,
+        );
     }
 
     #[Test]
@@ -129,7 +143,7 @@ final class PageAddressFactoryTest extends TestCase
         $address = $this->factory()->forDocument($this->target('2.1'), 'index.md');
 
         static::assertSame('aggregate-renderer/2.1/index.html', $address->file);
-        static::assertSame('https://docs.example.org/aggregate-renderer/2.1/', $address->address);
+        static::assertSame('https://docs.example.org/aggregate-renderer/2.1/index.html', $address->address);
     }
 
     #[Test]

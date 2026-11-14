@@ -14,8 +14,11 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Render;
 
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\PageStatus;
+use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Render\NotFoundPage;
 use CommonDoc\Aggregate\Render\PageAddressFactory;
@@ -32,6 +35,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Webware\Navigation\View\Helper\Navigation;
 
 use function file_get_contents;
 use function is_file;
@@ -68,11 +72,11 @@ final class SiteRendererTest extends TestCase
                     'versions' => [
                         [
                             'version' => '1.0',
-                            'address' => 'https://docs.example.org/aggregate-renderer/1.0/',
+                            'address' => 'https://docs.example.org/aggregate-renderer/1.0/index.html',
                         ],
                         [
                             'version' => '1.1',
-                            'address' => 'https://docs.example.org/aggregate-renderer/1.1/',
+                            'address' => 'https://docs.example.org/aggregate-renderer/1.1/index.html',
                         ],
                     ],
                 ],
@@ -87,36 +91,30 @@ final class SiteRendererTest extends TestCase
         $pages = $this->renderer(documents: [
             'guide/setup.md' => "# Setup\n",
             'index.md'       => "# Home\n",
-        ])->render(
-            target: $this->target(),
-            documents: ['guide/setup.md', 'index.md'],
-        );
+        ])->render(new TargetCorpus(target: $this->target(), documents: ['guide/setup.md', 'index.md']));
 
         static::assertCount(2, $pages);
-        static::assertSame('https://docs.example.org/aggregate-renderer/1.0/', $pages[0]->address);
         static::assertSame(
-            'https://docs.example.org/aggregate-renderer/1.0/guide/setup/',
-            $pages[1]->address,
+            'https://docs.example.org/aggregate-renderer/1.0/guide/setup.html',
+            $pages[0]->address,
         );
+        static::assertSame('https://docs.example.org/aggregate-renderer/1.0/index.html', $pages[1]->address);
     }
 
     #[Test]
     public function rendersEveryDocumentOfATargetIntoItsVersionDirectory(): void
     {
         $pages = $this->renderer(documents: ['getting-started.md' => "# Getting started\n\nInstall it.\n"])
-            ->render(
-                target: $this->target(),
-                documents: ['getting-started.md'],
-            );
+            ->render(new TargetCorpus(target: $this->target(), documents: ['getting-started.md']));
 
         static::assertCount(1, $pages);
         static::assertSame(
-            'https://docs.example.org/aggregate-renderer/1.0/getting-started/',
+            'https://docs.example.org/aggregate-renderer/1.0/getting-started.html',
             $pages[0]->address,
         );
         static::assertSame(PageStatus::Rendered, $pages[0]->status);
 
-        $html = $this->written('aggregate-renderer/1.0/getting-started/index.html');
+        $html = $this->written('aggregate-renderer/1.0/getting-started.html');
 
         static::assertStringContainsString('<!DOCTYPE html>', $html);
         static::assertStringContainsString('<h1>Getting started</h1>', $html);
@@ -127,10 +125,7 @@ final class SiteRendererTest extends TestCase
     public function reportsEveryDocumentAsFailedWhenOneCannotBeAddressed(): void
     {
         $pages = $this->renderer(documents: ['index.md' => "# Home\n"])
-            ->render(
-                target: $this->target(),
-                documents: ['../escape.md', 'index.md'],
-            );
+            ->render(new TargetCorpus(target: $this->target(), documents: ['../escape.md', 'index.md']));
 
         static::assertCount(2, $pages);
 
@@ -149,8 +144,8 @@ final class SiteRendererTest extends TestCase
         $html = $this->written('index.html');
 
         static::assertStringContainsString('aggregate-renderer', $html);
-        static::assertStringContainsString('https://docs.example.org/aggregate-renderer/1.0/', $html);
-        static::assertStringContainsString('https://docs.example.org/aggregate-renderer/1.1/', $html);
+        static::assertStringContainsString('https://docs.example.org/aggregate-renderer/1.0/index.html', $html);
+        static::assertStringContainsString('https://docs.example.org/aggregate-renderer/1.1/index.html', $html);
     }
 
     #[Test]
@@ -191,7 +186,13 @@ final class SiteRendererTest extends TestCase
                 static fn(Target $target, string $documentPath): string => $documents[$documentPath] ?? '',
             );
 
-        return new SiteRendererFactory()->create(
+        $routes = RouteTable::create();
+
+        return new SiteRendererFactory(
+            routes    : $routes,
+            navigation: new Navigation(routeCollector: $routes->collector),
+            links     : new LinkTotals(),
+        )->create(
             config: Config::site(outputDirectory: "{$this->directory->path}/build"),
             source: $source,
         );

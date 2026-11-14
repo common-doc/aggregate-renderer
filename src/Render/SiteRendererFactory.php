@@ -14,7 +14,10 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Render;
 
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Config\SiteConfig;
+use CommonDoc\Aggregate\Navigation\PageNavigation;
+use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Source\SourceInterface;
 use CommonDoc\View\PageContext;
@@ -24,6 +27,7 @@ use League\CommonMark\Parser\MarkdownParser;
 use League\CommonMark\Renderer\HtmlRenderer;
 use Mezzio\Template\Exception\ExceptionInterface as TemplateExceptionInterface;
 use Override;
+use Webware\Navigation\View\Helper\Navigation;
 
 /**
  * Builds the renderer a site configuration describes.
@@ -32,9 +36,19 @@ use Override;
  * CommonMark environment, and the listener on that environment reads the same context instance the
  * target renderer writes to. Splitting that across factories would make the sharing an assumption
  * held at three call sites rather than a fact established in one place.
+ *
+ * The navigation markup is built here too, and for the same reason: the helper the layout asks for
+ * its sidebar, and the activation the target renderer performs before rendering a page, have to be
+ * the same instance. Two instances would render every page with an empty or a stale sidebar.
  */
 final readonly class SiteRendererFactory implements SiteRendererFactoryInterface
 {
+    public function __construct(
+        private RouteTable $routes,
+        private Navigation $navigation,
+        private LinkTotals $links,
+    ) {}
+
     /**
      * @throws AlreadyInitializedException When the markdown environment has already been configured
      * @throws InvalidArgumentException    When the output root or the host name is refused
@@ -43,8 +57,17 @@ final readonly class SiteRendererFactory implements SiteRendererFactoryInterface
     #[Override]
     public function create(SiteConfig $config, SourceInterface $source): SiteRendererInterface
     {
+        $navigation = $config->navigation->enabled
+            ? new PageNavigation(
+                helper: $this->navigation,
+                navId : $config->navigation->identifier,
+            )
+            : null;
         $views       = new ViewFactory();
-        $templates   = $views->create(config: $config);
+        $templates   = $views->create(
+            config    : $config,
+            navigation: $navigation,
+        );
         $pages       = new PageContext();
         $environment = $views->environment(
             templates: $templates,
@@ -63,6 +86,13 @@ final readonly class SiteRendererFactory implements SiteRendererFactoryInterface
                     html  : new HtmlRenderer(environment: $environment),
                 ),
                 pages    : $pages,
+                links    : null === $navigation
+                    ? null
+                    : new LinkRewriter(
+                        router: $this->routes->router,
+                        links : $this->links,
+                    ),
+                navigation: $navigation,
             ),
             index   : new SiteIndex(
                 tree     : $tree,

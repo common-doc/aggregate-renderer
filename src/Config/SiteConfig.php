@@ -47,6 +47,8 @@ final readonly class SiteConfig
     /** @var array<string, non-empty-string> */
     public array $templateMap;
 
+    public NavigationConfig $navigation;
+
     /**
      * @param non-empty-string $organization
      * @param non-empty-string $tokenEnvVar
@@ -66,6 +68,7 @@ final readonly class SiteConfig
         string $hostname,
         Strategy $strategy,
         array $templateMap,
+        NavigationConfig $navigation = new NavigationConfig(),
     ) {
         $this->organization    = $organization;
         $this->tokenEnvVar     = $tokenEnvVar;
@@ -75,5 +78,6 @@ final readonly class SiteConfig
         $this->hostname        = $hostname;
         $this->strategy        = $strategy;
         $this->templateMap     = $templateMap;
+        $this->navigation      = $navigation;
     }
 }

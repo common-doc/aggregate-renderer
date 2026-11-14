@@ -21,6 +21,7 @@ use function array_keys;
 use function array_map;
 use function in_array;
 use function is_array;
+use function is_bool;
 use function is_string;
 
 /**
@@ -76,6 +77,25 @@ final readonly class Section
     public function optionalObject(string $key): ?self
     {
         return array_key_exists($key, $this->members) ? $this->object($key) : null;
+    }
+
+    /**
+     * @throws InvalidSiteConfigException When the key is present but does not hold a boolean
+     */
+    public function optionalBool(string $key): ?bool
+    {
+        if (! array_key_exists($key, $this->members)) {
+            return null;
+        }
+
+        /** @var mixed $value */
+        $value = $this->members[$key];
+
+        if (! is_bool($value)) {
+            throw InvalidSiteConfigException::at($this->pathFor($key), 'must be a boolean.');
+        }
+
+        return $value;
     }
 
     /**

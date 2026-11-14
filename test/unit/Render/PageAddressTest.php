@@ -24,6 +24,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(PageAddress::class)]
 #[CoversMethod(PageAddress::class, '__construct')]
+#[CoversMethod(PageAddress::class, 'path')]
 final class PageAddressTest extends TestCase
 {
     /**
@@ -34,15 +35,15 @@ final class PageAddressTest extends TestCase
         return [
             'version root' => [
                 'aggregate-renderer/1.0/index.html',
-                'https://docs.example.org/aggregate-renderer/1.0/',
+                'https://docs.example.org/aggregate-renderer/1.0/index.html',
             ],
             'nested page'  => [
-                'aggregate-renderer/1.0/guide/setup/index.html',
-                'https://docs.example.org/aggregate-renderer/1.0/guide/setup/',
+                'aggregate-renderer/1.0/guide/setup.html',
+                'https://docs.example.org/aggregate-renderer/1.0/guide/setup.html',
             ],
             'site index'   => [
                 'index.html',
-                'https://docs.example.org/',
+                'https://docs.example.org/index.html',
             ],
         ];
     }
@@ -53,15 +54,17 @@ final class PageAddressTest extends TestCase
     public static function unservablePairs(): array
     {
         return [
-            'empty file'            => ['', 'https://docs.example.org/'],
-            'absolute file'         => ['/1.0/index.html', 'https://docs.example.org/1.0/'],
-            'not a page file'       => [
-                'aggregate-renderer/1.0/page.html',
-                'https://docs.example.org/aggregate-renderer/1.0/',
+            'empty file'            => ['', 'https://docs.example.org/index.html'],
+            'absolute file'         => ['/1.0/index.html', 'https://docs.example.org/1.0/index.html'],
+            'not an html file'      => [
+                'aggregate-renderer/1.0/page.md',
+                'https://docs.example.org/aggregate-renderer/1.0/page.md',
             ],
-            'plain http'            => ['index.html', 'http://docs.example.org/'],
-            'no trailing slash'     => ['index.html', 'https://docs.example.org'],
-            'address names another' => ['aggregate-renderer/1.0/index.html', 'https://docs.example.org/2.0/'],
+            'plain http'            => ['index.html', 'http://docs.example.org/index.html'],
+            'address names another' => [
+                'aggregate-renderer/1.0/index.html',
+                'https://docs.example.org/aggregate-renderer/2.0/index.html',
+            ],
         ];
     }
 
@@ -79,16 +82,28 @@ final class PageAddressTest extends TestCase
     }
 
     #[Test]
-    public function explainsWhenTheAddressIsNotAnHttpsDirectory(): void
+    #[DataProvider('servablePairs')]
+    public function namesTheAddressAsAPathBelowTheSiteRoot(string $file, string $address): void
+    {
+        $page = new PageAddress(
+            file   : $file,
+            address: $address,
+        );
+
+        static::assertSame('/' . $file, $page->path());
+    }
+
+    #[Test]
+    public function explainsWhenTheAddressDoesNotNameTheOutputFile(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'The page address "http://docs.example.org/" is not a directory address on https.',
+            'The page address "http://docs.example.org/index.html" does not name the output file "index.html".',
         );
 
         new PageAddress(
             file   : 'index.html',
-            address: 'http://docs.example.org/',
+            address: 'http://docs.example.org/index.html',
         );
     }
 
@@ -97,40 +112,55 @@ final class PageAddressTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'The page address "https://docs.example.org/2.0/" does not name the output file "aggregate-renderer/1.0/index.html".',
+            'The page address "https://docs.example.org/aggregate-renderer/2.0/index.html" '
+            . 'does not name the output file "aggregate-renderer/1.0/index.html".',
         );
 
         new PageAddress(
             file   : 'aggregate-renderer/1.0/index.html',
-            address: 'https://docs.example.org/2.0/',
+            address: 'https://docs.example.org/aggregate-renderer/2.0/index.html',
         );
     }
 
     #[Test]
-    public function explainsWhenTheAddressNamesOnlyTheTailOfTheDirectory(): void
+    public function explainsWhenTheAddressNamesOnlyTheTailOfTheFile(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'The page address "https://docs.example.org/ocs/" does not name the output file "docs/index.html".',
+            'The page address "https://docs.example.org/ocs/index.html" does not name the output file "docs/index.html".',
         );
 
         new PageAddress(
             file   : 'docs/index.html',
-            address: 'https://docs.example.org/ocs/',
+            address: 'https://docs.example.org/ocs/index.html',
         );
     }
 
     #[Test]
-    public function explainsWhenTheFileDoesNotServeADirectory(): void
+    public function explainsWhenTheFileIsNotAnHtmlFile(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'The output file "aggregate-renderer/1.0/page.html" does not serve a directory address.',
+            'The output file "aggregate-renderer/1.0/page.md" is not an html file.',
         );
 
         new PageAddress(
-            file   : 'aggregate-renderer/1.0/page.html',
-            address: 'https://docs.example.org/aggregate-renderer/1.0/',
+            file   : 'aggregate-renderer/1.0/page.md',
+            address: 'https://docs.example.org/aggregate-renderer/1.0/page.md',
+        );
+    }
+
+    #[Test]
+    public function explainsWhenTheAddressDoesNotNameABareHost(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'The page address "https://docs.example.org/site/index.html" is not on https.',
+        );
+
+        new PageAddress(
+            file   : 'index.html',
+            address: 'https://docs.example.org/site/index.html',
         );
     }
 
@@ -144,7 +174,7 @@ final class PageAddressTest extends TestCase
 
         new PageAddress(
             file   : '/1.0/index.html',
-            address: 'https://docs.example.org/1.0/',
+            address: 'https://docs.example.org/1.0/index.html',
         );
     }
 

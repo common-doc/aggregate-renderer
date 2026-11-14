@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Report;
 
 use CommonDoc\Aggregate\Build\BuildReport;
+use CommonDoc\Aggregate\Build\LinkOutcome;
 use CommonDoc\Aggregate\Build\ProjectResult;
 use InvalidArgumentException;
 use JsonException;
@@ -42,7 +43,8 @@ use const JSON_UNESCAPED_SLASHES;
  * @type ErrorShape = array{reasonCode: string}
  * @type ProjectShape = array{slug: non-empty-string, status: 'ok'|'partial'|'failed'|'skipped', pages: int, errors: list<ErrorShape>}
  * @type TotalShape = array{ok: non-negative-int, partial: non-negative-int, failed: non-negative-int, skipped: non-negative-int, pages: non-negative-int}
- * @type ReportShape = array{exitCode: int, totals: TotalShape, projects: list<ProjectShape>}
+ * @type LinkShape = array{documents: non-negative-int, unresolved: non-negative-int, absolute: non-negative-int, external: non-negative-int, anchors: non-negative-int, 'non-document-link': non-negative-int}
+ * @type ReportShape = array{exitCode: int, totals: TotalShape, links: LinkShape, projects: list<ProjectShape>}
  */
 final readonly class ReportFile
 {
@@ -133,6 +135,12 @@ final readonly class ReportFile
             $projects[] = $this->projectShapeOf($project);
         }
 
+        $links = [];
+
+        foreach (LinkOutcome::cases() as $outcome) {
+            $links[$outcome->value] = $report->links[$outcome->value] ?? 0;
+        }
+
         return [
             'exitCode' => $report->exitCode,
             'totals'   => [
@@ -142,6 +150,7 @@ final readonly class ReportFile
                 'skipped' => $report->totals->skipped,
                 'pages'   => $report->totals->pages,
             ],
+            'links'    => $links,
             'projects' => $projects,
         ];
     }

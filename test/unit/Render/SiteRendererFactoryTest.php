@@ -14,7 +14,10 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Render;
 
+use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
@@ -26,6 +29,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Webware\Navigation\View\Helper\Navigation;
 
 #[CoversClass(SiteRendererFactory::class)]
 #[CoversMethod(SiteRendererFactory::class, 'create')]
@@ -36,7 +40,7 @@ final class SiteRendererFactoryTest extends TestCase
     #[Test]
     public function buildsTheRendererTheBuildRendersThrough(): void
     {
-        $factory = new SiteRendererFactory();
+        $factory = $this->factory();
 
         static::assertInstanceOf(SiteRendererFactoryInterface::class, $factory);
         static::assertInstanceOf(SiteRendererInterface::class, $this->create());
@@ -47,7 +51,7 @@ final class SiteRendererFactoryTest extends TestCase
     {
         $renderer = $this->create(documents: ['index.md' => "# Home\n"]);
 
-        $pages = $renderer->render(
+        $pages = $renderer->render(new TargetCorpus(
             target: new Target(
                 project: new Project(
                     name        : 'aggregate-renderer',
@@ -58,10 +62,10 @@ final class SiteRendererFactoryTest extends TestCase
                 version: '1.0',
             ),
             documents: ['index.md'],
-        );
+        ));
 
         static::assertCount(1, $pages);
-        static::assertSame('https://docs.example.org/aggregate-renderer/1.0/', $pages[0]->address);
+        static::assertSame('https://docs.example.org/aggregate-renderer/1.0/index.html', $pages[0]->address);
     }
 
     protected function setUp(): void
@@ -72,6 +76,17 @@ final class SiteRendererFactoryTest extends TestCase
     protected function tearDown(): void
     {
         $this->directory->remove();
+    }
+
+    private function factory(): SiteRendererFactory
+    {
+        $routes = RouteTable::create();
+
+        return new SiteRendererFactory(
+            routes    : $routes,
+            navigation: new Navigation(routeCollector: $routes->collector),
+            links     : new LinkTotals(),
+        );
     }
 
     /**
@@ -86,7 +101,7 @@ final class SiteRendererFactoryTest extends TestCase
                 static fn(Target $target, string $documentPath): string => $documents[$documentPath] ?? '',
             );
 
-        return new SiteRendererFactory()->create(
+        return $this->factory()->create(
             config: Config::site(outputDirectory: "{$this->directory->path}/build"),
             source: $source,
         );

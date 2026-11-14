@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Render;
 
 use CommonDoc\Aggregate\Config\SiteConfig;
+use CommonDoc\Aggregate\Navigation\NavigationMarkup;
+use CommonDoc\Aggregate\Navigation\PageNavigation;
 use CommonDoc\View\DocumentViewRenderer;
 use CommonDoc\View\PageContext;
 use CommonDoc\View\PageContextListener;
@@ -82,13 +84,16 @@ final readonly class ViewFactory
         ];
     }
 
-    private static function helpers(): HelperPluginManager
+    private static function helpers(?PageNavigation $navigation = null): HelperPluginManager
     {
         return new HelperPluginManager(
             creationContext: new ServiceManager(),
             config         : [
                 'factories' => [
-                    LayoutHelper::class => InvokableFactory::class,
+                    LayoutHelper::class          => InvokableFactory::class,
+                    NavigationMarkup::NAME       => static fn(): NavigationMarkup => new NavigationMarkup(
+                        navigation: $navigation,
+                    ),
                 ],
             ],
         );
@@ -99,9 +104,11 @@ final readonly class ViewFactory
      *
      * @throws TemplateExceptionInterface When the template map or the helper manager refuses a name
      */
-    public function create(SiteConfig $config): TemplateRendererInterface
-    {
-        $helpers = self::helpers();
+    public function create(
+        SiteConfig $config,
+        ?PageNavigation $navigation = null,
+    ): TemplateRendererInterface {
+        $helpers = self::helpers(navigation: $navigation);
 
         return new LaminasViewRenderer(
             renderer: new PhpRenderer(

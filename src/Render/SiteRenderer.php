@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Render;
 
 use CommonDoc\Aggregate\Build\PageResult;
+use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Version\Target;
 use InvalidArgumentException;
 use Mezzio\Template\Exception\ExceptionInterface as TemplateExceptionInterface;
@@ -37,23 +38,14 @@ final readonly class SiteRenderer implements SiteRendererInterface
     ) {}
 
     /**
-     * @param list<non-empty-string> $documents Ordered by path, as the source returned them
-     *
-     * @return list<PageResult> Ordered by address, one result per document
-     *
-     * @throws InvalidArgumentException When a page result is asked for a status its reason code cannot carry
-     */
-    /**
-     * @param list<non-empty-string> $documents Ordered by path, as the source returned them
-     *
      * @return list<PageResult> Ordered by address, one result per document
      *
      * @throws InvalidArgumentException When a page result is asked for a status its reason code cannot carry
      */
     #[Override]
-    public function render(Target $target, array $documents): array
+    public function render(TargetCorpus $corpus): array
     {
-        return $this->targets->render($target, $documents);
+        return $this->targets->render($corpus);
     }
 
     /**

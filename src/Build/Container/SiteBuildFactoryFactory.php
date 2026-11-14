@@ -14,8 +14,10 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Build\Container;
 
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
+use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
 use CommonDoc\Aggregate\Version\StrategyFactory;
@@ -53,6 +55,8 @@ final readonly class SiteBuildFactoryFactory implements FactoryInterface
             sources   : $container->get(SourceFactoryInterface::class),
             strategies: $container->get(StrategyFactory::class),
             renderers : $container->get(SiteRendererFactoryInterface::class),
+            routes    : $container->get(RouteTable::class),
+            links     : $container->get(LinkTotals::class),
         );
     }
 }

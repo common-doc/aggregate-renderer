@@ -16,6 +16,10 @@
  * `content`, so this template reads that and nothing else: it must not assume a page, because the
  * site index and the not-found page wrap here too.
  *
+ * The sidebar is asked for in the same output tag as the body on purpose. The helper emits nothing
+ * when navigation is disabled, so an unconfigured site publishes exactly the bytes it published
+ * before this template knew about navigation, indentation included.
+ *
  * @var string $content
  */
 ?>
@@ -30,7 +34,7 @@
     <header class="site-header">
         <a class="site-home" href="/">Documentation</a>
     </header>
-    <?= $this->content ?>
+    <?= $this->navigationMarkup() ?><?= $this->content ?>
     <footer class="site-footer">
         <p>Built by common-doc/aggregate-renderer.</p>
     </footer>

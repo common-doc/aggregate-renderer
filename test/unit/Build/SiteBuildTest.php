@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Build;
 
+use CommonDoc\Aggregate\Build\CorpusCollector;
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ProjectBuild;
@@ -18,11 +20,16 @@ use CommonDoc\Aggregate\Build\ProjectOutcome;
 use CommonDoc\Aggregate\Build\ProjectStatus;
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Build\SiteBuild;
+use CommonDoc\Aggregate\Build\TargetCorpus;
+use CommonDoc\Aggregate\Config\NavigationConfig;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
 use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
 use CommonDoc\Aggregate\Exception\SourceUnavailableException;
+use CommonDoc\Aggregate\Navigation\DocumentRouteProviderFactory;
+use CommonDoc\Aggregate\Navigation\RouteTable;
+use CommonDoc\Aggregate\Render\PageAddressFactory;
 use CommonDoc\Aggregate\Source\SourceInterface;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\StrategyFactory;
@@ -126,9 +133,9 @@ final class SiteBuildTest extends TestCase
     #[Test]
     public function failsAProjectWhenAPageCannotBeRendered(): void
     {
-        $renderer = new SiteRenderer(static fn(Target $target, array $documents): array => [
+        $renderer = new SiteRenderer(static fn(TargetCorpus $corpus): array => [
             new PageResult(
-                address   : 'https://docs.example.com/widget/1.0/index.md',
+                address   : 'https://docs.example.com/widget/1.0/index.html',
                 status    : PageStatus::Failed,
                 reasonCode: ReasonCode::RenderFailed,
                 fromCache : false,
@@ -291,7 +298,7 @@ final class SiteBuildTest extends TestCase
         static::assertSame(1, $report->totals->pages);
         static::assertSame(ProjectStatus::Ok, $report->projects[0]->status);
         static::assertSame(
-            'https://docs.example.com/widget/1.0/index.md',
+            'https://docs.example.com/widget/1.0/index.html',
             $report->projects[0]->pages[0]->address,
         );
     }
@@ -340,14 +347,26 @@ final class SiteBuildTest extends TestCase
         $discovery = $this->createStub(ProjectSourceInterface::class);
         $discovery->method('all')->willReturn(array_map(self::project(...), $projects));
 
+        $source = $this->source($candidates, $unavailable, $missing);
+        $links  = new LinkTotals();
+
         return new SiteBuild(
             discovery   : $discovery,
+            corpus      : new CorpusCollector(
+                source    : $source,
+                strategies: new StrategyFactory(),
+            ),
             renderer    : $renderer,
             projectBuild: new ProjectBuild(
-                $this->source($candidates, $unavailable, $missing),
-                $renderer,
-                new StrategyFactory(),
+                renderer: $renderer,
+                links   : $links,
             ),
+            providers   : new DocumentRouteProviderFactory(
+                addresses : new PageAddressFactory(hostname: 'docs.example.com'),
+                navigation: new NavigationConfig(),
+            ),
+            routes      : RouteTable::create(),
+            links       : $links,
         );
     }
 

@@ -14,11 +14,13 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Build;
 
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuild;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
+use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
@@ -83,6 +85,8 @@ final class SiteBuildFactoryTest extends TestCase
             sources   : $sources ?? $this->createStub(SourceFactoryInterface::class),
             strategies: new StrategyFactory(),
             renderers : $renderers ?? $this->createStub(SiteRendererFactoryInterface::class),
+            routes    : RouteTable::create(),
+            links     : new LinkTotals(),
         );
     }
 }

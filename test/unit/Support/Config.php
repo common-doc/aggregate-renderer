@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Support;
 
+use CommonDoc\Aggregate\Config\NavigationConfig;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Version\Strategy;
 
@@ -31,6 +32,7 @@ final class Config
         string $cacheDirectory = '.cache',
         array $templateMap = [],
         Strategy $strategy = Strategy::Ref,
+        NavigationConfig $navigation = new NavigationConfig(),
     ): SiteConfig {
         return new SiteConfig(
             organization   : 'common-doc',
@@ -41,6 +43,7 @@ final class Config
             hostname       : 'docs.example.org',
             strategy       : $strategy,
             templateMap    : $templateMap,
+            navigation     : $navigation,
         );
     }
 }

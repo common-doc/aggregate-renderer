@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate;
 
 use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
@@ -24,6 +25,11 @@ use CommonDoc\Aggregate\Console\Container\BuildCommandFactory;
 use CommonDoc\Aggregate\Discovery\Container\GitHubProjectSourceFactoryFactory;
 use CommonDoc\Aggregate\Discovery\GitHubProjectSourceFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
+use CommonDoc\Aggregate\Navigation\Container\NavigationHelperFactory;
+use CommonDoc\Aggregate\Navigation\Container\RouteTableFactory;
+use CommonDoc\Aggregate\Navigation\DocsSidebarRenderer;
+use CommonDoc\Aggregate\Navigation\RouteTable;
+use CommonDoc\Aggregate\Render\Container\SiteRendererFactoryFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\ViewFactory;
@@ -41,6 +47,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
+use Webware\Navigation\View\Helper\Navigation;
 
 use function dirname;
 
@@ -112,12 +119,16 @@ final class ConfigProviderTest extends TestCase
                     SourceFactoryInterface::class        => SourceFactory::class,
                 ],
                 'factories' => [
-                    BuildCommand::class               => BuildCommandFactory::class,
-                    GitHubProjectSourceFactory::class => GitHubProjectSourceFactoryFactory::class,
-                    ReportFileFactory::class          => InvokableFactory::class,
-                    SiteBuildFactory::class           => SiteBuildFactoryFactory::class,
-                    SiteConfigReader::class           => InvokableFactory::class,
-                    SiteRendererFactory::class        => InvokableFactory::class,
+                    BuildCommand::class                => BuildCommandFactory::class,
+                    DocsSidebarRenderer::class         => InvokableFactory::class,
+                    GitHubProjectSourceFactory::class  => GitHubProjectSourceFactoryFactory::class,
+                    LinkTotals::class                  => InvokableFactory::class,
+                    Navigation::class                  => NavigationHelperFactory::class,
+                    ReportFileFactory::class           => InvokableFactory::class,
+                    RouteTable::class                  => RouteTableFactory::class,
+                    SiteBuildFactory::class            => SiteBuildFactoryFactory::class,
+                    SiteConfigReader::class            => InvokableFactory::class,
+                    SiteRendererFactory::class         => SiteRendererFactoryFactory::class,
                     SourceFactory::class              => InvokableFactory::class,
                     StrategyFactory::class            => InvokableFactory::class,
                 ],

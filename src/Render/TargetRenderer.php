@@ -17,8 +17,11 @@ namespace CommonDoc\Aggregate\Render;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ReasonCode;
+use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Exception\UnaddressableDocumentException;
+use CommonDoc\Aggregate\Navigation\DocumentRouteProvider;
+use CommonDoc\Aggregate\Navigation\PageNavigation;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Source\SourceInterface;
 use CommonDoc\Aggregate\Version\Target;
@@ -29,11 +32,7 @@ use League\CommonMark\Exception\CommonMarkException;
 use Mezzio\Template\Exception\ExceptionInterface;
 use RuntimeException;
 
-use function str_replace;
 use function strcmp;
-use function strrpos;
-use function substr;
-use function ucwords;
 use function usort;
 
 /**
@@ -57,6 +56,8 @@ final readonly class TargetRenderer
         private SourceInterface $source,
         private DocumentRenderer $renderer,
         private PageContext $pages,
+        private ?LinkRewriter $links = null,
+        private ?PageNavigation $navigation = null,
     ) {}
 
     /**
@@ -88,77 +89,17 @@ final readonly class TargetRenderer
         return $pages;
     }
 
-    private static function humanise(string $stem): string
-    {
-        return ucwords(str_replace(
-            search : ['-', '_'],
-            replace: ' ',
-            subject: $stem,
-        ));
-    }
-
     /**
-     * The title a page is published under, derived from the document path rather than from its content.
-     *
-     * The derivation is part of the contract, not a convenience: a title read from the document would
-     * change whenever the prose did, and the page address would not.
-     */
-    private static function labelFor(Target $target, string $documentPath): string
-    {
-        $stem = substr(
-            string: $documentPath,
-            offset: 0,
-            length: -3,
-        );
-        $slash = strrpos(
-            haystack: $stem,
-            needle  : '/',
-        );
-        $last = false === $slash
-            ? $stem
-            : substr(
-                string: $stem,
-                offset: $slash + 1,
-            );
-
-        if ('index' !== $last) {
-            return self::humanise(stem: $last);
-        }
-
-        if (false === $slash) {
-            return $target->project->name;
-        }
-
-        $parent = substr(
-            string: $stem,
-            offset: 0,
-            length: $slash,
-        );
-        $parentSlash = strrpos(
-            haystack: $parent,
-            needle  : '/',
-        );
-        $entry = false === $parentSlash
-            ? $parent
-            : substr(
-                string: $parent,
-                offset: $parentSlash + 1,
-            );
-
-        return self::humanise(stem: $entry);
-    }
-
-    /**
-     * @param list<non-empty-string> $documents Ordered by path, as the source returned them
-     *
      * @return list<PageResult> Ordered by address, one result per document
      *
      * @throws InvalidArgumentException When a page result is asked for a status its reason code cannot carry
      */
-    public function render(Target $target, array $documents): array
+    public function render(TargetCorpus $corpus): array
     {
+        $target = $corpus->target;
+
         try {
-            $addresses = $this->addressesOf($target, $documents);
+            $addresses = $this->addressesOf($target, $corpus->documents);
 
             /** @var list<array{non-empty-string, PageAddress, string}> $prepared */
             $prepared = [];
@@ -167,7 +108,7 @@ final readonly class TargetRenderer
                 $prepared[] = [$documentPath, $address, $this->source->contents($target, $documentPath)];
             }
         } catch (SourceUnavailableException|UnaddressableDocumentException) {
-            return self::failed($documents);
+            return self::failed($corpus->documents);
         }
 
         $pages = [];
@@ -227,7 +168,7 @@ final readonly class TargetRenderer
     ): PageResult {
         try {
             $this->pages->set(new Page(
-                label       : self::labelFor($target, $documentPath),
+                label       : PageLabel::for($target, $documentPath),
                 projectName : $target->project->name,
                 projectSlug : $target->project->sitePath,
                 sourcePath  : $documentPath,
@@ -235,10 +176,14 @@ final readonly class TargetRenderer
                 versionLabel: $target->version,
             ));
 
+            $this->navigation?->activate(DocumentRouteProvider::nameFor($target, $documentPath));
+
             try {
                 $rendered = $this->renderer->render(markdown: $contents);
+                $rendered = $this->links?->rewrite($rendered, $target, $documentPath) ?? $rendered;
             } finally {
                 $this->pages->clear();
+                $this->navigation?->deactivate();
             }
 
             $this->tree->write($address->file, $rendered);

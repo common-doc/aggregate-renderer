@@ -4,81 +4,53 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Build;
 
-use CommonDoc\Aggregate\Discovery\Project;
-use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
-use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
-use CommonDoc\Aggregate\Source\SourceInterface;
-use CommonDoc\Aggregate\Version\Strategy;
-use CommonDoc\Aggregate\Version\StrategyFactory;
-use CommonDoc\Aggregate\Version\Target;
 use InvalidArgumentException;
 
 use function array_push;
 
 /**
- * One project, from its candidate names to the pages it produced.
+ * One project, from the corpus it resolved to the pages it produced.
  *
- * A project that cannot be resolved is recorded and skipped; a version whose documentation directory is
- * absent is recorded and the other versions still render, because one defective version does not
- * invalidate a project. Only the two exceptions the source seam declares are caught here, and both
- * carry the reason code the report publishes, so the report cannot disagree with what happened.
+ * Rendering reads nothing but the corpus: the documents arrived with it, so a version the build never
+ * resolved cannot be rendered, and the source is read once per version instead of twice. The targets
+ * travel beside the result because the result is what the report publishes and the targets are what
+ * the site index links.
+ *
+ * A prose link that named no published document is counted while the pages render, and the project
+ * that carried it reports `unresolved-links`. The count is a defect the site owner has to see, and
+ * the report is the only place the build can say so.
  *
  * @internal
  */
 final readonly class ProjectBuild
 {
     public function __construct(
-        private SourceInterface $source,
         private SiteRendererInterface $renderer,
-        private StrategyFactory $strategies,
+        private LinkTotals $links,
     ) {}
 
     /**
      * @throws InvalidArgumentException When the result cannot describe what was rendered
      */
-    public function outcome(Project $project, Strategy $strategy): ProjectOutcome
+    public function render(ProjectCorpus $corpus): ProjectOutcome
     {
-        try {
-            $targets = $this->strategies
-                ->create($strategy, $project)
-                ->resolve($this->source->candidates($project));
-        } catch (SourceUnavailableException $sourceUnavailable) {
-            return ProjectOutcome::failed($project, $sourceUnavailable->reasonCode);
+        $pages      = [];
+        $rendered   = [];
+        $unresolved = $this->links->count(LinkOutcome::Unresolved);
+
+        foreach ($corpus->targets as $target) {
+            array_push($pages, ...$this->renderer->render($target));
+
+            $rendered[] = $target->target;
         }
 
-        return $this->render($project, $targets);
-    }
+        $reasons = $corpus->reasons;
 
-    /**
-     * @param list<Target> $targets Ordered by version
-     *
-     * @throws InvalidArgumentException When a result cannot describe what it rendered
-     */
-    private function render(Project $project, array $targets): ProjectOutcome
-    {
-        if ([] === $targets) {
-            return ProjectOutcome::failed($project, ReasonCode::NoVersions);
+        if ($this->links->count(LinkOutcome::Unresolved) > $unresolved) {
+            $reasons[] = ReasonCode::UnresolvedLinks;
         }
 
-        $pages    = [];
-        $rendered = [];
-        $reasons  = [];
-
-        foreach ($targets as $target) {
-            try {
-                $documents = $this->source->documents($target);
-            } catch (MissingDocDirectoryException|SourceUnavailableException $unavailable) {
-                $reasons[] = $unavailable->reasonCode;
-
-                continue;
-            }
-
-            array_push($pages, ...$this->renderer->render($target, $documents));
-
-            $rendered[] = $target;
-        }
-
-        return ProjectOutcome::for($project, $rendered, $pages, $reasons);
+        return ProjectOutcome::for($corpus->project, $rendered, $pages, $reasons);
     }
 }

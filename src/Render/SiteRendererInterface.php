@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Render;
 
 use CommonDoc\Aggregate\Build\PageResult;
+use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Version\Target;
 use InvalidArgumentException;
 use Mezzio\Template\Exception\ExceptionInterface as TemplateExceptionInterface;
@@ -29,13 +30,11 @@ interface SiteRendererInterface
      * A page that cannot be rendered is reported rather than thrown, so one defective document never
      * takes the rest of the corpus with it.
      *
-     * @param list<non-empty-string> $documents Ordered by path, as {@see \CommonDoc\Aggregate\Source\SourceInterface::documents()} returned them
-     *
      * @return list<PageResult> Ordered by address, one result per document
      *
      * @throws InvalidArgumentException When a page result is asked for a status its reason code cannot carry
      */
-    public function render(Target $target, array $documents): array;
+    public function render(TargetCorpus $corpus): array;
 
     /**
      * Writes the page served for an address that resolves to nothing.

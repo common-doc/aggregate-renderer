@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate;
 
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Console\BuildCommand;
@@ -20,6 +21,7 @@ use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
 use CommonDoc\Aggregate\Exception\DiscoveryException;
 use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
 use CommonDoc\Aggregate\Exception\SourceUnavailableException;
+use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Report\ReportFileFactory;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
@@ -213,6 +215,8 @@ final class BuildCommandTest extends TestCase
                 sources   : $this->sources($candidates, $unavailable, $missing),
                 strategies: new StrategyFactory(),
                 renderers : $renderers,
+                routes    : RouteTable::create(),
+                links     : new LinkTotals(),
             ),
             new ReportFileFactory(),
         );

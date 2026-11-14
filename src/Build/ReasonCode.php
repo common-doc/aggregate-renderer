@@ -34,6 +34,7 @@ enum ReasonCode: string
     case MissingDocDirectory  = 'missing-doc-directory';
     case SourceUnavailable    = 'source-unavailable';
     case RenderFailed         = 'render-failed';
+    case UnresolvedLinks      = 'unresolved-links';
     case WriteFailed          = 'write-failed';
     case MissingCname         = 'missing-cname';
 }

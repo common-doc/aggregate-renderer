@@ -17,8 +17,10 @@ namespace CommonDoc\Aggregate\Render;
 use InvalidArgumentException;
 
 use function sprintf;
+use function str_contains;
 use function str_ends_with;
 use function str_starts_with;
+use function strlen;
 use function substr;
 
 /**
@@ -29,7 +31,8 @@ use function substr;
  * a file that nothing writes.
  *
  * The file is relative to the output directory and uses forward slashes on every platform, so the
- * value is safe to record and compare regardless of where the build ran.
+ * value is safe to record and compare regardless of where the build ran. One document is one file,
+ * so the file always ends in `.html`, and the address is the `https` address of exactly that file.
  */
 final readonly class PageAddress
 {
@@ -49,26 +52,34 @@ final readonly class PageAddress
             );
         }
 
-        if (! str_ends_with($file, 'index.html')) {
+        if (! str_ends_with($file, '.html')) {
             throw new InvalidArgumentException(
-                sprintf('The output file "%s" does not serve a directory address.', $file),
+                sprintf('The output file "%s" is not an html file.', $file),
             );
         }
 
-        if (! str_starts_with($address, 'https://') || ! str_ends_with($address, '/')) {
-            throw new InvalidArgumentException(
-                sprintf('The page address "%s" is not a directory address on https.', $address),
-            );
-        }
+        $suffix = '/' . $file;
 
-        if (! str_ends_with($address, substr(
-            string: $file,
-            offset: 0,
-            length: -10,
-        ))) {
+        if (! str_starts_with($address, 'https://') || ! str_ends_with($address, $suffix)) {
             throw new InvalidArgumentException(
                 sprintf('The page address "%s" does not name the output file "%s".', $address, $file),
             );
         }
+
+        $host = substr($address, 8, -strlen($suffix));
+
+        if ('' === $host || str_contains($host, '/')) {
+            throw new InvalidArgumentException(
+                sprintf('The page address "%s" is not on https.', $address),
+            );
+        }
+    }
+
+    /**
+     * The address this page is served from, as a path below the site root.
+     */
+    public function path(): string
+    {
+        return '/' . $this->file;
     }
 }

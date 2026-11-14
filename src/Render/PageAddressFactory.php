@@ -22,22 +22,18 @@ use function in_array;
 use function preg_match;
 use function sprintf;
 use function str_contains;
-use function str_ends_with;
 use function substr;
 
 /**
  * Derives the output file and the public address of a page from one target and one document path.
  *
  * This is the only place in the build where a page's file or address is computed, which is what makes
- * the address mapping in `contracts/output-tree.md` structural. A document `index.md` at the root of a
- * version maps to that version's root, and every other document maps to a directory named after it, so
- * every published address is a directory address and every file is an `index.html`.
+ * the address mapping in `contracts/output-tree.md` structural. One markdown file maps to one html
+ * file of the same relative path, so a document keeps its own name rather than becoming a directory.
  */
 final readonly class PageAddressFactory
 {
     private const string DOCUMENT_PATTERN = '~^[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*\.md$~';
-
-    private const string INDEX_SUFFIX = '/index';
 
     /** @var non-empty-string */
     private string $hostname;
@@ -59,11 +55,11 @@ final readonly class PageAddressFactory
     }
 
     /**
-     * The directory one document is served from, relative to the version root.
+     * The document path, once it is known to name a file below the documentation directory.
      *
      * @throws InvalidArgumentException When the path is not a relative markdown path below the directory
      */
-    private static function directoryOf(string $documentPath): string
+    private static function validated(string $documentPath): string
     {
         if (preg_match(self::DOCUMENT_PATTERN, $documentPath) !== 1) {
             throw new InvalidArgumentException(
@@ -81,25 +77,7 @@ final readonly class PageAddressFactory
             );
         }
 
-        $withoutExtension = substr(
-            string: $documentPath,
-            offset: 0,
-            length: -3,
-        );
-
-        if ('index' === $withoutExtension) {
-            return '';
-        }
-
-        if (str_ends_with($withoutExtension, self::INDEX_SUFFIX)) {
-            return substr(
-                string: $withoutExtension,
-                offset: 0,
-                length: -6,
-            );
-        }
-
-        return $withoutExtension;
+        return $documentPath;
     }
 
     /**
@@ -109,16 +87,16 @@ final readonly class PageAddressFactory
      */
     public function forDocument(Target $target, string $documentPath): PageAddress
     {
-        $directory = self::directoryOf($documentPath);
-        $prefix    = "{$target->project->sitePath}/{$target->version}";
-        $file      = '' === $directory
-            ? "{$prefix}/index.html"
-            : "{$prefix}/{$directory}/index.html";
-        $address = 'https://' . $this->hostname . '/' . $prefix . '/' . ('' === $directory ? '' : "{$directory}/");
+        $file = sprintf(
+            '%s/%s/%s.html',
+            $target->project->sitePath,
+            $target->version,
+            substr(self::validated($documentPath), 0, -3),
+        );
 
         return new PageAddress(
             file   : $file,
-            address: $address,
+            address: 'https://' . $this->hostname . '/' . $file,
         );
     }
 }

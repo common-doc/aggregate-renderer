@@ -15,9 +15,10 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Build\Container;
 
 use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
-use CommonDoc\Aggregate\Render\SiteRendererFactory;
+use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactory;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
@@ -48,7 +49,10 @@ final class SiteBuildFactoryFactoryTest extends TestCase
         $container = new ServiceManager();
         $container->setService(SourceFactoryInterface::class, new SourceFactory());
         $container->setService(StrategyFactory::class, new StrategyFactory());
-        $container->setService(SiteRendererFactoryInterface::class, new SiteRendererFactory());
+        $container->setService(
+            SiteRendererFactoryInterface::class,
+            $this->createStub(SiteRendererFactoryInterface::class),
+        );
 
         $this->expectException(ContainerExceptionInterface::class);
 
@@ -65,7 +69,12 @@ final class SiteBuildFactoryFactoryTest extends TestCase
         );
         $container->setService(SourceFactoryInterface::class, new SourceFactory());
         $container->setService(StrategyFactory::class, new StrategyFactory());
-        $container->setService(SiteRendererFactoryInterface::class, new SiteRendererFactory());
+        $container->setService(
+            SiteRendererFactoryInterface::class,
+            $this->createStub(SiteRendererFactoryInterface::class),
+        );
+        $container->setService(RouteTable::class, RouteTable::create());
+        $container->setService(LinkTotals::class, new LinkTotals());
 
         return $container;
     }
