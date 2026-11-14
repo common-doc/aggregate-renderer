@@ -29,7 +29,6 @@ use function array_pop;
 use function dirname;
 use function explode;
 use function implode;
-use function iterator_to_array;
 use function preg_match;
 use function rawurldecode;
 use function str_contains;
@@ -160,13 +159,18 @@ final readonly class LinkRewriter
             $href  = substr($href, 0, $questionMark);
         }
 
-        $documentPath = $this->documentPathOf(
-            fromPath: $fromPath,
-            href    : rawurldecode($href),
-        );
+        $decoded = rawurldecode($href);
+
+        if (! str_ends_with($decoded, '.md')) {
+            $this->links->add(LinkOutcome::NonDocument);
+
+            return null;
+        }
+
+        $documentPath = $this->collapse(fromPath: $fromPath, href: $decoded);
 
         if (null === $documentPath) {
-            $this->links->add(LinkOutcome::NonDocument);
+            $this->links->add(LinkOutcome::Unresolved);
 
             return null;
         }
@@ -185,20 +189,18 @@ final readonly class LinkRewriter
     }
 
     /**
-     * The document path a relative href names, relative to the version root, or null when it names
-     * none.
+     * The document path a relative markdown href names, relative to the version root, or null when it
+     * names none.
      *
-     * Only a markdown path can name a document, so anything else is left alone. The rest is collapsed
-     * against the page's own directory and then handed to `RelativePath`, the class that already
-     * refuses a path leaving the tree: an href that escapes the version root is not a document of this
-     * corpus and must not be rewritten into one.
+     * The href is collapsed against the page's own directory and then handed to `RelativePath`, the
+     * class that already refuses a path leaving the tree: an href that escapes the version root is not
+     * a document of this corpus, so it is a miss rather than a document, and no second escape check is
+     * written here.
+     *
+     * @param non-empty-string $fromPath
      */
-    private function documentPathOf(string $fromPath, string $href): ?string
+    private function collapse(string $fromPath, string $href): ?string
     {
-        if (! str_ends_with($href, '.md')) {
-            return null;
-        }
-
         $directory = dirname($fromPath);
         $segments  = [];
 

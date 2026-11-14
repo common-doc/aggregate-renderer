@@ -59,15 +59,16 @@ final readonly class DocsSidebarRenderer implements RendererInterface
 
     private function item(NavigationContainer $container, NavigationItem $item): string
     {
-        $active = $container->isActive($item);
+        $active  = $container->isActive($item);
+        $current = $item->route->getName() === $container->getActiveRouteName();
         $classes = $active ? 'docs-nav-link active' : 'docs-nav-link';
-        $current = $active ? ' aria-current="page"' : '';
+        $marker  = $current ? ' aria-current="page"' : '';
 
         $html = sprintf(
             '<li class="docs-nav-item"><a class="%s" href="%s"%s>%s</a>',
             $classes,
             self::escape($item->route->getPath()),
-            $current,
+            $marker,
             self::escape($item->label),
         );
 

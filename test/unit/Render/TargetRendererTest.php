@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Render;
 
+use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Build\TargetCorpus;
@@ -22,6 +23,7 @@ use CommonDoc\Aggregate\Exception\UnaddressableDocumentException;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Render\DocumentReader;
 use CommonDoc\Aggregate\Render\DocumentRenderer;
+use CommonDoc\Aggregate\Render\LinkRewriter;
 use CommonDoc\Aggregate\Render\PageAddressFactory;
 use CommonDoc\Aggregate\Render\TargetRenderer;
 use CommonDoc\Aggregate\Render\ViewFactory;
@@ -30,6 +32,7 @@ use CommonDoc\Aggregate\Version\Target;
 use CommonDoc\View\Page;
 use CommonDoc\View\PageContext;
 use CommonDocTest\Aggregate\Support\Config;
+use CommonDocTest\Aggregate\Support\Targets;
 use CommonDocTest\Aggregate\Support\TemporaryDirectory;
 use InvalidArgumentException;
 use League\CommonMark\Environment\EnvironmentInterface;
@@ -241,6 +244,53 @@ final class TargetRendererTest extends TestCase
         );
     }
 
+    #[Test]
+    public function rewritesARelativeLinkToThePublishedAddressBeforeWriting(): void
+    {
+        $pages = $this->renderer(
+            documents: ['guide/setup.md' => "See [home](../index.md).\n"],
+            links    : $this->links(documents: ['index.md', 'guide/setup.md']),
+        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['guide/setup.md']));
+
+        static::assertSame(PageStatus::Rendered, $pages[0]->status);
+        static::assertStringContainsString(
+            'href="/aggregate-renderer/2.0/index.html"',
+            $this->tree()->read('aggregate-renderer/2.0/guide/setup.html'),
+        );
+    }
+
+    #[Test]
+    public function writesALinkToAnUnpublishedDocumentExactlyAsWritten(): void
+    {
+        $pages = $this->renderer(
+            documents: ['guide/setup.md' => "See [elsewhere](missing.md).\n"],
+            links    : $this->links(documents: ['guide/setup.md']),
+        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['guide/setup.md']));
+
+        static::assertSame(PageStatus::Rendered, $pages[0]->status);
+        static::assertStringContainsString(
+            'href="missing.md"',
+            $this->tree()->read('aggregate-renderer/2.0/guide/setup.html'),
+        );
+    }
+
+    #[Test]
+    public function stillReportsAFailedPageWhenLinksWouldHaveBeenRewritten(): void
+    {
+        $templates = $this->createStub(TemplateRendererInterface::class);
+        $templates->method('render')->willThrowException(new RenderingException('no such template'));
+
+        $pages = $this->renderer(
+            documents: ['index.md' => "# Home\n"],
+            templates: $templates,
+            links    : $this->links(documents: ['index.md']),
+        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md']));
+
+        static::assertSame(PageStatus::Failed, $pages[0]->status);
+        static::assertSame(ReasonCode::RenderFailed, $pages[0]->reasonCode);
+        static::assertFalse(is_file("{$this->directory->path}/build/aggregate-renderer/2.0/index.html"));
+    }
+
     protected function setUp(): void
     {
         $this->directory = new TemporaryDirectory();
@@ -268,6 +318,7 @@ final class TargetRendererTest extends TestCase
         array $documents = [],
         ?TemplateRendererInterface $templates = null,
         ?PageContext $pages = null,
+        ?LinkRewriter $links = null,
     ): TargetRenderer {
         $source = $this->createStub(SourceInterface::class);
         $source
@@ -280,6 +331,18 @@ final class TargetRendererTest extends TestCase
             source   : $source,
             templates: $templates,
             pages    : $pages,
+            links    : $links,
+        );
+    }
+
+    /**
+     * @param list<non-empty-string> $documents
+     */
+    private function links(array $documents): LinkRewriter
+    {
+        return new LinkRewriter(
+            router: Targets::routeTable(documents: $documents)->router,
+            links : new LinkTotals(),
         );
     }
 
@@ -300,6 +363,7 @@ final class TargetRendererTest extends TestCase
         SourceInterface $source,
         ?TemplateRendererInterface $templates = null,
         ?PageContext $pages = null,
+        ?LinkRewriter $links = null,
     ): TargetRenderer {
         $pages       ??= new PageContext();
         $environment = $this->environment(
@@ -316,6 +380,7 @@ final class TargetRendererTest extends TestCase
                 html  : new HtmlRenderer(environment: $environment),
             ),
             pages    : $pages,
+            links    : $links,
         );
     }
 

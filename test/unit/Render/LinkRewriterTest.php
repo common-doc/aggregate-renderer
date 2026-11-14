@@ -1,0 +1,200 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is part of the common-doc/aggregate-renderer package.
+ *
+ * Copyright (c) 2026 Joey Smith <jsmith@webinertia.net>
+ * and contributors.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace CommonDocTest\Aggregate\Render;
+
+use CommonDoc\Aggregate\Build\LinkOutcome;
+use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Render\LinkRewriter;
+use CommonDocTest\Aggregate\Support\Targets;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+
+use function array_filter;
+use function preg_match;
+use function sprintf;
+
+#[CoversClass(LinkRewriter::class)]
+#[CoversMethod(LinkRewriter::class, 'rewrite')]
+final class LinkRewriterTest extends TestCase
+{
+    private LinkRewriter $rewriter;
+
+    private LinkTotals $links;
+
+    #[Test]
+    public function keepsTheFragmentOfARewrittenLink(): void
+    {
+        static::assertSame(
+            '/aggregate-renderer/2.0/guide/advanced.html#install',
+            $this->hrefOf('advanced.md#install', 'guide/setup.md'),
+        );
+    }
+
+    #[Test]
+    public function keepsTheQueryOfARewrittenLink(): void
+    {
+        static::assertSame(
+            '/aggregate-renderer/2.0/guide/advanced.html?tab=2',
+            $this->hrefOf('advanced.md?tab=2', 'guide/setup.md'),
+        );
+    }
+
+    #[Test]
+    public function leavesAFragmentOfTheSamePageAlone(): void
+    {
+        static::assertSame('#install', $this->hrefOf('#install', 'guide/setup.md'));
+        static::assertSame(1, $this->links->count(LinkOutcome::Anchors));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
+    public function leavesALinkThatEscapesTheVersionRootAlone(): void
+    {
+        static::assertSame('../escape.md', $this->hrefOf('../escape.md', 'index.md'));
+        static::assertSame(1, $this->links->count(LinkOutcome::Unresolved));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
+    public function leavesALinkToAnUnpublishedDocumentAlone(): void
+    {
+        static::assertSame('missing.md', $this->hrefOf('missing.md', 'guide/setup.md'));
+        static::assertSame(1, $this->links->count(LinkOutcome::Unresolved));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
+    public function leavesAMailAddressAlone(): void
+    {
+        static::assertSame(
+            'mailto:docs@example.org',
+            $this->hrefOf('mailto:docs@example.org', 'guide/setup.md'),
+        );
+        static::assertSame(1, $this->links->count(LinkOutcome::External));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
+    public function leavesANonDocumentLinkAlone(): void
+    {
+        static::assertSame('images/diagram.png', $this->hrefOf('images/diagram.png', 'guide/setup.md'));
+        static::assertSame(1, $this->links->count(LinkOutcome::NonDocument));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
+    public function leavesARootAbsoluteAddressAlone(): void
+    {
+        static::assertSame(
+            '/elsewhere/index.html',
+            $this->hrefOf('/elsewhere/index.html', 'guide/setup.md'),
+        );
+        static::assertSame(1, $this->links->count(LinkOutcome::Absolute));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
+    public function leavesAnExternalAddressAlone(): void
+    {
+        static::assertSame(
+            'https://example.org/api.md',
+            $this->hrefOf('https://example.org/api.md', 'guide/setup.md'),
+        );
+        static::assertSame(1, $this->links->count(LinkOutcome::External));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
+    public function returnsHtmlCarryingNoLinkUntouched(): void
+    {
+        static::assertSame(
+            '<p>No link here.</p>' . "\n",
+            $this->rewriter->rewrite(
+                html    : '<p>No link here.</p>' . "\n",
+                target  : Targets::target(),
+                fromPath: 'guide/setup.md',
+            ),
+        );
+        static::assertSame([], array_filter(
+            $this->links->toArray(),
+            static fn(int $count): bool => 0 !== $count,
+        ));
+    }
+
+    #[Test]
+    public function rewritesADocumentLinkInTheSameDirectory(): void
+    {
+        static::assertSame(
+            '/aggregate-renderer/2.0/guide/advanced.html',
+            $this->hrefOf('advanced.md', 'guide/setup.md'),
+        );
+        static::assertSame(1, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::Unresolved));
+    }
+
+    #[Test]
+    public function rewritesADocumentLinkToAnotherDirectory(): void
+    {
+        static::assertSame(
+            '/aggregate-renderer/2.0/flow-charts.html',
+            $this->hrefOf('../flow-charts.md', 'guide/setup.md'),
+        );
+    }
+
+    #[Test]
+    public function rewritesALinkToALandingPage(): void
+    {
+        static::assertSame(
+            '/aggregate-renderer/2.0/guide/index.html',
+            $this->hrefOf('index.md', 'guide/setup.md'),
+        );
+        static::assertSame(
+            '/aggregate-renderer/2.0/index.html',
+            $this->hrefOf('../index.md', 'guide/setup.md'),
+        );
+    }
+
+    protected function setUp(): void
+    {
+        $this->links = new LinkTotals();
+
+        $this->rewriter = new LinkRewriter(
+            router: Targets::routeTable(documents: [
+                'index.md',
+                'flow-charts.md',
+                'guide/index.md',
+                'guide/setup.md',
+                'guide/advanced.md',
+            ])->router,
+            links : $this->links,
+        );
+    }
+
+    private function hrefOf(string $href, string $fromPath): string
+    {
+        $html = $this->rewriter->rewrite(
+            html    : sprintf('<p><a href="%s">link</a></p>', $href),
+            target  : Targets::target(),
+            fromPath: $fromPath,
+        );
+
+        static::assertSame(1, preg_match('~href="([^"]*)"~', $html, $matches));
+        static::assertArrayHasKey(1, $matches);
+
+        return $matches[1];
+    }
+}
