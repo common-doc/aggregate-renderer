@@ -5,7 +5,7 @@
   "description": "Shape of the report written to output.reportPath. The publish workflow consumes this file, so every field named here is settled and no field may be renamed without a workflow change.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["exitCode", "totals", "projects"],
+  "required": ["exitCode", "totals", "links", "projects"],
   "properties": {
     "exitCode": {
       "type": "integer",
@@ -22,6 +22,44 @@
         "failed": { "type": "integer", "minimum": 0 },
         "skipped": { "type": "integer", "minimum": 0 },
         "pages": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "links": {
+      "type": "object",
+      "description": "How many hrefs of each kind the build resolved, over the whole run.",
+      "additionalProperties": false,
+      "required": ["documents", "unresolved", "absolute", "external", "anchors", "non-document-link"],
+      "properties": {
+        "documents": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Hrefs rewritten through the router to a published document."
+        },
+        "unresolved": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Hrefs naming a document the build did not publish. Left as written."
+        },
+        "absolute": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Root absolute hrefs, already in published form, left unverified."
+        },
+        "external": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Hrefs naming another scheme or host, left untouched."
+        },
+        "anchors": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Fragments of the page itself, left untouched."
+        },
+        "non-document-link": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Hrefs that do not name a markdown document, such as a link to an image or an archive."
+        }
       }
     },
     "projects": {
@@ -74,6 +112,7 @@
                     "missing-doc-directory",
                     "source-unavailable",
                     "render-failed",
+                    "unresolved-links",
                     "write-failed",
                     "missing-cname"
                   ]

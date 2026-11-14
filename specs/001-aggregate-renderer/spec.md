@@ -134,6 +134,12 @@ A maintainer gives a documentation site custom styling by supplying a replacemen
 - **FR-020**: The build MUST NOT write any page when a pre-render integrity check fails.
 - **FR-021**: The build MUST write every file with normalized line endings and stable ordering so two builds of identical inputs produce identical bytes.
 - **FR-022**: The published tree MUST satisfy the existing publish workflow's site configuration, report and site address file contracts, so the workflow is reused unchanged.
+- **FR-023**: Every internal link in a rendered page that names a published document MUST be rewritten to that document's published address, preserving any fragment and query it carried.
+- **FR-024**: A link that names a document the build did not publish MUST be left exactly as written and MUST be counted in the build report, and publication MUST be tested by asking the router for the document's route rather than by consulting a second list of documents.
+- **FR-025**: The build MUST register one named route per published page, held by the router, and every href in the published tree MUST be generated from it.
+- **FR-026**: Every rendered page MUST carry navigation for the corpus, with the page being rendered marked current, rendered through the theme's `Webware\Navigation\Renderer\RendererInterface` implementation.
+- **FR-027**: The build MUST resolve the whole corpus, every project and every version, before it writes any page.
+- **FR-028**: Two documents publishing to one address or one route name MUST fail the build, and the collision MUST be detected when the second document is registered rather than after either page is written.
 
 ### Key Entities
 

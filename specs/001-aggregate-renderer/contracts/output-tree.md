@@ -11,17 +11,16 @@ Given `output.directory` of `dist` and `site.hostname` of `docs.example.org`:
 
 ```text
 dist/
-├── CNAME
-├── index.html
-├── 404.html
-├── <slug>/
-│   └── <version>/
-│       ├── index.html
-│       └── <document directory>/
-│           └── index.html
-└── <slug>/
-    └── <version>/
-        └── index.html
+|-- CNAME
+|-- index.html
+|-- 404.html
+`-- <slug>/
+    `-- <version>/
+        |-- index.html
+        |-- <document>.html
+        `-- <directory>/
+            |-- index.html
+            `-- <document>.html
 ```
 
 ## Rules
@@ -32,9 +31,10 @@ dist/
    stage writes a file without the address that names it, and no stage records an address without the
    file that backs it.
 3. A document `index.md` at the root of a project's documentation directory maps to
-   `<slug>/<version>/index.html` and to `https://<hostname>/<slug>/<version>/`.
-4. Any other document `<relative path>.md` maps to `<slug>/<version>/<relative directory>/index.html`
-   and to `https://<hostname>/<slug>/<version>/<relative directory>/`.
+   `<slug>/<version>/index.html` and to `https://<hostname>/<slug>/<version>/index.html`.
+4. Any other document `<relative path>.md` maps to `<slug>/<version>/<relative path>.html` and to
+   `https://<hostname>/<slug>/<version>/<relative path>.html`. One document in, one html file out:
+   nothing becomes a directory, and a document keeps its own file name.
 5. The site index is `index.html` at the output root and is served at `https://<hostname>/`.
 6. The not-found page is `404.html` at the output root. It is not a page of any project, is not
    counted in `totals.pages`, and has no entry in the report.
@@ -45,6 +45,15 @@ dist/
 9. No file in the tree contains a token, a commit reference used as proof of freshness, a timestamp,
    or an absolute path. Two builds of an unchanged corpus are byte-identical.
 10. Every generated file uses LF endings.
+11. A page's `href` to a document of the corpus is root absolute, for example
+    `/slug/version/document.html`, so a page's own depth never changes what its links address.
+12. A directory's `index.html` is still the page GitHub Pages serves for that directory, so
+    `/slug/version/api-reference/` keeps resolving without a redirect. Only the hrefs name the file
+    explicitly.
+13. Navigation markup, when navigation is enabled, lists the pages of the corpus and marks the page
+    being rendered as current. It is produced by the theme's
+    `Webware\Navigation\Renderer\RendererInterface` implementation from the same routes the build
+    registered, so it cannot disagree with the pages it links to.
 
 ## Verification
 

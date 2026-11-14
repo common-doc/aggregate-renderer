@@ -58,6 +58,25 @@
           "minLength": 1,
           "pattern": "^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$",
           "description": "Bare host used for every public address and written to the site address file. No scheme, no slash."
+        },
+        "navigation": {
+          "type": "object",
+          "description": "Sidebar and link rewriting. Absent means disabled, which publishes the same pages as before the feature existed.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true every internal link to a published document is rewritten to its address and every page carries navigation. When false no page is rewritten and no navigation is rendered."
+            },
+            "identifier": {
+              "type": "string",
+              "minLength": 1,
+              "default": "docs",
+              "pattern": "^[A-Za-z0-9_-]+$",
+              "description": "Navigation identifier the generated pages register under, and the one the theme asks for when it renders the sidebar."
+            }
+          }
         }
       }
     },

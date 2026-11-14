@@ -173,7 +173,7 @@ assert the resulting project list.
 ### Implementation for User Story 3
 
 - [ ] T066 [P] [US3] Create `src/Discovery/SitePath.php` deriving the site path from a repository name and rejecting a name that derives nothing
-- [ ] T067 [US3] Create `src/Discovery/DiscoveryFailed.php` carrying a `ReasonCode` for a missing token, a rejected token or an unreachable boundary
+- [ ] T067 [US3] Create `src/Exception/DiscoveryException.php` carrying a `ReasonCode` for a missing token, a rejected token or an unreachable boundary
 - [ ] T068 [US3] Create `src/Discovery/GitHubProjectSource.php` listing organization repositories, reading each `doc-target` property and returning only onboarded projects
 - [ ] T069 [US3] Create `src/Discovery/Token.php` reading the value of the configured environment variable at the moment of use and never retaining it in a value that reaches output or the report
 - [ ] T070 [US3] Bind `ProjectSourceInterface` to `GitHubProjectSource` with the injected PSR-18 client and PSR-17 factories in `src/ConfigProvider.php`
