@@ -1,0 +1,17 @@
+{
+    "organization": {
+        "name": "webinertia",
+        "tokenEnvVar": "DOCS_TOKEN"
+    },
+    "output": {
+        "directory": "dist",
+        "reportPath": "dist/report.json",
+        "cacheDirectory": ".cache/multi-repo"
+    },
+    "site": {
+        "hostname": "docs.webinertia.net"
+    },
+    "versions": {
+        "strategy": "tree"
+    }
+}

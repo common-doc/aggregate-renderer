@@ -23,6 +23,8 @@ use CommonDoc\Aggregate\Console\Container\BuildCommandFactory;
 use CommonDoc\Aggregate\Discovery\Container\GitHubProjectSourceFactoryFactory;
 use CommonDoc\Aggregate\Discovery\GitHubProjectSourceFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
+use CommonDoc\Aggregate\Http\Container\CurlHttpTransportFactory;
+use CommonDoc\Aggregate\Http\Container\RequestFactoryFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\ViewFactory;
@@ -32,6 +34,8 @@ use CommonDoc\Aggregate\Source\SourceFactory;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
 use CommonDoc\Aggregate\Version\StrategyFactory;
 use Laminas\ServiceManager\Factory\InvokableFactory;
+use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
 
 /**
  * Wiring entry point for the package.
@@ -44,8 +48,10 @@ use Laminas\ServiceManager\Factory\InvokableFactory;
  * values that only exist once `site.json` has been read. Discovery follows the same rule: the
  * organization it lists and the variable holding the token live in the configuration, so the
  * container supplies the HTTP seams and {@see ProjectSourceFactoryInterface} turns them into a
- * source per build. The PSR-18 client is the one service this package cannot register for a
- * consumer, so a site that never builds still resolves everything else.
+ * source per build. Both seams carry a default registration here, so the shipped command assembles
+ * with no consumer wiring: {@see \CommonDoc\Aggregate\Http\CurlHttpTransport} for the client, and
+ * diactoros' request factory for the message factory. A consumer that registers either interface
+ * itself replaces the default, which is how a different transport, or a test double, is installed.
  *
  * @internal
  */
@@ -58,6 +64,10 @@ final class ConfigProvider
      * what carries the factory. Registering the interface straight against a class name would let
      * the container build that class as the service with no arguments, which is only correct for
      * the factories that genuinely hold no dependencies.
+     *
+     * The two HTTP seams are the exception: they are keyed straight on their interface, because an
+     * alias forwards the read to the target name and would then shadow a consumer binding to the
+     * interface itself.
      *
      * @return array{aliases: array<interface-string, class-string>, factories: array<class-string, class-string>}
      */
@@ -73,8 +83,10 @@ final class ConfigProvider
             ],
             'factories' => [
                 BuildCommand::class               => BuildCommandFactory::class,
+                ClientInterface::class            => CurlHttpTransportFactory::class,
                 GitHubProjectSourceFactory::class => GitHubProjectSourceFactoryFactory::class,
                 ReportFileFactory::class          => InvokableFactory::class,
+                RequestFactoryInterface::class    => RequestFactoryFactory::class,
                 SiteBuildFactory::class           => SiteBuildFactoryFactory::class,
                 SiteConfigReader::class           => InvokableFactory::class,
                 SiteRendererFactory::class        => InvokableFactory::class,

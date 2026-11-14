@@ -28,6 +28,7 @@ use League\CommonMark\Environment\EnvironmentInterface;
 use League\CommonMark\Event\DocumentPreRenderEvent;
 use League\CommonMark\Exception\AlreadyInitializedException;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\Table\TableExtension;
 use League\CommonMark\Node\Block\Document;
 use Mezzio\LaminasView\LaminasViewRenderer;
 use Mezzio\LaminasView\LayoutHelper;
@@ -121,6 +122,10 @@ final readonly class ViewFactory
      * The page listener is registered on the same pipeline with the caller's context instance, so the
      * page a caller sets is the page the document carries and the template reads.
      *
+     * The table extension is part of the environment rather than an optional extra because the
+     * documentation corpora this package publishes are written with pipe tables: without it a table
+     * is emitted as a single paragraph of literal pipes and cells.
+     *
      * @throws AlreadyInitializedException When the environment has already been configured
      */
     public function environment(TemplateRendererInterface $templates, PageContext $pages): EnvironmentInterface
@@ -128,6 +133,7 @@ final readonly class ViewFactory
         $environment = new Environment();
 
         $environment->addExtension(extension: new CommonMarkCoreExtension());
+        $environment->addExtension(extension: new TableExtension());
         $environment->addRenderer(
             nodeClass: Document::class,
             renderer : new DocumentViewRenderer(renderer: $templates),

@@ -140,6 +140,23 @@ final class ViewFactoryTest extends TestCase
     }
 
     #[Test]
+    public function rendersATableAsTableMarkup(): void
+    {
+        $environment = $this->environment();
+
+        $markup = (string) new HtmlRenderer(environment: $environment)->renderDocument(
+            document: new MarkdownParser(environment: $environment)->parse(
+                input: "| Exception | Thrown when |\n|---|---|\n| `E` | Never |\n",
+            ),
+        );
+
+        static::assertStringContainsString('<table>', $markup);
+        static::assertStringContainsString('<th>Exception</th>', $markup);
+        static::assertStringContainsString('<td><code>E</code></td>', $markup);
+        static::assertStringNotContainsString('|---|---|', $markup);
+    }
+
+    #[Test]
     public function returnsAPhpRendererForTheSameMap(): void
     {
         static::assertInstanceOf(

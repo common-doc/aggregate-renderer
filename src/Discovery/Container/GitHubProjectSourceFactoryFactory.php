@@ -26,10 +26,9 @@ use Psr\Http\Message\RequestFactoryInterface;
 /**
  * Builds the GitHub project source factory from the HTTP seams a consumer registered.
  *
- * The client is the one seam this package cannot supply: a PSR-18 implementation is a consumer
- * choice, so a missing registration is reported as a missing service when the command is built
- * rather than as a fatal error later. The request factory has an invokable default from
- * laminas-diactoros, a dependency this package already carries.
+ * Both seams have a default registration in this package's {@see \CommonDoc\Aggregate\ConfigProvider},
+ * so the shipped command assembles with no consumer wiring, and a consumer that registers either
+ * interface replaces the default.
  */
 final readonly class GitHubProjectSourceFactoryFactory implements FactoryInterface
 {

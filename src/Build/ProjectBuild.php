@@ -43,8 +43,8 @@ final readonly class ProjectBuild
             $targets = $this->strategies
                 ->create($strategy, $project)
                 ->resolve($this->source->candidates($project));
-        } catch (SourceUnavailableException $sourceUnavailable) {
-            return ProjectOutcome::failed($project, $sourceUnavailable->reasonCode);
+        } catch (MissingDocDirectoryException|SourceUnavailableException $unavailable) {
+            return ProjectOutcome::failed($project, $unavailable->reasonCode);
         }
 
         return $this->render($project, $targets);

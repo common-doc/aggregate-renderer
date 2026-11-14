@@ -24,6 +24,19 @@ use PHPUnit\Framework\TestCase;
 #[CoversMethod(DocTarget::class, 'from')]
 final class DocTargetTest extends TestCase
 {
+    /**
+     * The repository properties endpoint serializes a `true_false` property as a string, so the
+     * boolean spelling of truth is not the one discovery actually reads.
+     */
+    #[Test]
+    public function onboardsWithTheConventionalDirectoryWhenATrueFalseValueArrivesAsAString(): void
+    {
+        static::assertSame(
+            'docs',
+            DocTarget::from([['property_name' => 'doc-target', 'value' => 'true']]),
+        );
+    }
+
     #[Test]
     public function onboardsWithTheConventionalDirectoryWhenThePropertyIsTrue(): void
     {
@@ -61,6 +74,16 @@ final class DocTargetTest extends TestCase
     public function reportsNoTargetForAnEmptyPropertyList(): void
     {
         static::assertNull(DocTarget::from([]));
+    }
+
+    /**
+     * A repository that carries the property at its default is off the site, which is only true if
+     * the serialized spelling of false is read as the boolean it stands for.
+     */
+    #[Test]
+    public function reportsNoTargetWhenAFalseValueArrivesAsAString(): void
+    {
+        static::assertNull(DocTarget::from([['property_name' => 'doc-target', 'value' => 'false']]));
     }
 
     #[Test]

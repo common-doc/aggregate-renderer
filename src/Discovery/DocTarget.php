@@ -16,15 +16,18 @@ namespace CommonDoc\Aggregate\Discovery;
 
 use function array_find;
 use function is_string;
+use function strtolower;
 use function trim;
 
 /**
  * The `doc-target` repository custom property, which is the whole onboarding surface.
  *
- * The property is defined at organization level as a boolean, so the two accepted forms are a
- * boolean `true`, which onboards the repository with the conventional `docs` directory, and a
- * non-empty string, which onboards it with the directory it names. Everything else, including
- * boolean `false` and a blank string, leaves the repository off the site.
+ * The property is defined at organization level as a `true_false` property, so the two accepted
+ * forms are truth, which onboards the repository with the conventional `docs` directory, and a
+ * non-empty string, which onboards it with the directory it names. The repository properties
+ * endpoint serializes a `true_false` value as the strings "true" and "false" rather than as JSON
+ * booleans, so both spellings are read as the boolean they stand for. Everything else, including
+ * false and a blank string, leaves the repository off the site.
  *
  * @internal
  */
@@ -58,6 +61,20 @@ final class DocTarget
             return self::DEFAULT_DIRECTORY;
         }
 
-        return is_string($value) && '' !== trim($value) ? trim($value) : null;
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        if ('' === $trimmed) {
+            return null;
+        }
+
+        return match (strtolower($trimmed)) {
+            'true'  => self::DEFAULT_DIRECTORY,
+            'false' => null,
+            default => $trimmed,
+        };
     }
 }

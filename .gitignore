@@ -9,6 +9,8 @@
 /infection.log
 /summary.log
 /vendor/
+/dist/
+/.cache/
 /.vscode
 /mago-results.txt
 *:Zone.Identifier

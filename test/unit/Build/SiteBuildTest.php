@@ -233,6 +233,43 @@ final class SiteBuildTest extends TestCase
     }
 
     #[Test]
+    public function recordsAProjectWhoseDocumentationDirectoryHoldsNoVersionDirectory(): void
+    {
+        $renderer  = new SiteRenderer();
+        $discovery = $this->createStub(ProjectSourceInterface::class);
+        $discovery->method('all')->willReturn([self::project('gadget'), self::project('widget')]);
+
+        $source = $this->createStub(SourceInterface::class);
+        $source
+            ->method('candidates')
+            ->willReturnCallback(
+                static function (Project $project): array {
+                    if ('widget' === $project->sitePath) {
+                        throw MissingDocDirectoryException::at($project, 'refs/remotes/origin/2.0.x');
+                    }
+
+                    return ['1.0.x'];
+                },
+            );
+        $source->method('documents')->willReturn(['index.md']);
+
+        $report = new SiteBuild(
+            discovery   : $discovery,
+            renderer    : $renderer,
+            projectBuild: new ProjectBuild($source, $renderer, new StrategyFactory()),
+        )->build($this->config());
+
+        static::assertSame(1, $report->exitCode);
+        static::assertSame(1, $report->totals->failed);
+        static::assertSame(1, $report->totals->ok);
+        static::assertSame('gadget', $report->projects[0]->sitePath);
+        static::assertSame(ProjectStatus::Ok, $report->projects[0]->status);
+        static::assertSame('widget', $report->projects[1]->sitePath);
+        static::assertSame(ProjectStatus::Failed, $report->projects[1]->status);
+        static::assertSame([ReasonCode::MissingDocDirectory], $report->projects[1]->reasonCodes);
+    }
+
+    #[Test]
     public function reportsAPartialProjectWhenOneVersionRendersAndAnotherCannotBeRead(): void
     {
         $renderer = new SiteRenderer();

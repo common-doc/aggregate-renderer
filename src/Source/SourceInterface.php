@@ -36,7 +36,10 @@ interface SourceInterface
      *
      * @return list<non-empty-string> Names without a reference prefix, unordered and possibly duplicated
      *
-     * @throws SourceUnavailableException When the candidates cannot be listed
+     * @throws SourceUnavailableException   When the candidates cannot be listed
+     * @throws MissingDocDirectoryException When the documentation directory is absent at the default
+     *                                      branch, which the tree strategy reports when it holds no
+     *                                      version directory
      */
     public function candidates(Project $project): array;
 

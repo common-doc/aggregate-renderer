@@ -24,6 +24,9 @@ use CommonDoc\Aggregate\Console\Container\BuildCommandFactory;
 use CommonDoc\Aggregate\Discovery\Container\GitHubProjectSourceFactoryFactory;
 use CommonDoc\Aggregate\Discovery\GitHubProjectSourceFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
+use CommonDoc\Aggregate\Http\Container\CurlHttpTransportFactory;
+use CommonDoc\Aggregate\Http\Container\RequestFactoryFactory;
+use CommonDoc\Aggregate\Http\CurlHttpTransport;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\ViewFactory;
@@ -42,6 +45,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Client\ClientInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 
+use function array_replace_recursive;
 use function dirname;
 
 #[CoversClass(ConfigProvider::class)]
@@ -51,13 +55,13 @@ use function dirname;
 final class ConfigProviderTest extends TestCase
 {
     #[Test]
-    public function buildsTheCommandThroughARealContainerOnceTheHttpSeamsAreRegistered(): void
+    public function assemblesTheCommandWithNoConsumerSuppliedHttpSeam(): void
     {
         $container = new ServiceManager(new ConfigProvider()->getDependencies());
-        $container->setService(ClientInterface::class, $this->createStub(ClientInterface::class));
-        $container->setService(RequestFactoryInterface::class, new RequestFactory());
 
         static::assertInstanceOf(BuildCommand::class, $container->get(BuildCommand::class));
+        static::assertInstanceOf(CurlHttpTransport::class, $container->get(ClientInterface::class));
+        static::assertInstanceOf(RequestFactory::class, $container->get(RequestFactoryInterface::class));
     }
 
     #[Test]
@@ -66,6 +70,27 @@ final class ConfigProviderTest extends TestCase
         foreach (new ConfigProvider()->getViewConfig()['map'] as $name => $path) {
             static::assertFileExists($path, $name);
         }
+    }
+
+    /**
+     * The default has to be replaceable, so a consumer's own binding to the interface must win.
+     */
+    #[Test]
+    public function letsAConsumerRegistrationReplaceTheDefaultClient(): void
+    {
+        $client = $this->createStub(ClientInterface::class);
+
+        $container = new ServiceManager(array_replace_recursive(
+            new ConfigProvider()->getDependencies(),
+            [
+                'factories' => [
+                    ClientInterface::class => static fn(): ClientInterface => $client,
+                ],
+            ],
+        ));
+
+        static::assertSame($client, $container->get(ClientInterface::class));
+        static::assertInstanceOf(BuildCommand::class, $container->get(BuildCommand::class));
     }
 
     #[Test]
@@ -113,8 +138,10 @@ final class ConfigProviderTest extends TestCase
                 ],
                 'factories' => [
                     BuildCommand::class               => BuildCommandFactory::class,
+                    ClientInterface::class            => CurlHttpTransportFactory::class,
                     GitHubProjectSourceFactory::class => GitHubProjectSourceFactoryFactory::class,
                     ReportFileFactory::class          => InvokableFactory::class,
+                    RequestFactoryInterface::class    => RequestFactoryFactory::class,
                     SiteBuildFactory::class           => SiteBuildFactoryFactory::class,
                     SiteConfigReader::class           => InvokableFactory::class,
                     SiteRendererFactory::class        => InvokableFactory::class,
