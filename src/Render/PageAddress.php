@@ -58,7 +58,7 @@ final readonly class PageAddress
             );
         }
 
-        $suffix = '/' . $file;
+        $suffix = "/{$file}";
 
         if (! str_starts_with($address, 'https://') || ! str_ends_with($address, $suffix)) {
             throw new InvalidArgumentException(
@@ -66,7 +66,11 @@ final readonly class PageAddress
             );
         }
 
-        $host = substr($address, 8, -strlen($suffix));
+        $host = substr(
+            string: $address,
+            offset: 8,
+            length: -strlen($suffix),
+        );
 
         if ('' === $host || str_contains($host, '/')) {
             throw new InvalidArgumentException(
@@ -77,9 +81,11 @@ final readonly class PageAddress
 
     /**
      * The address this page is served from, as a path below the site root.
+     *
+     * @return non-empty-string
      */
     public function path(): string
     {
-        return '/' . $this->file;
+        return "/{$this->file}";
     }
 }

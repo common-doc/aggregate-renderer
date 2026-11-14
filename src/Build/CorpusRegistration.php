@@ -1,0 +1,57 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * This file is part of the common-doc/aggregate-renderer package.
+ *
+ * Copyright (c) 2026 Joey Smith <jsmith@webinertia.net>
+ * and contributors.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+namespace CommonDoc\Aggregate\Build;
+
+use CommonDoc\Aggregate\Discovery\Project;
+use CommonDoc\Aggregate\Navigation\RouteProviderFactoryInterface;
+use CommonDoc\Aggregate\Navigation\RouteTable;
+use CommonDoc\Aggregate\Version\Strategy;
+use InvalidArgumentException;
+use Override;
+
+/**
+ * Resolves the corpus in full, then registers the route of every page it holds.
+ *
+ * The two phases are one collaborator because neither is useful alone: a corpus that no route names
+ * cannot have its links rewritten or its sidebar rendered, and a route table built from a partial
+ * corpus would silently miss every document a later project contributes. Both finish before the
+ * first page is written, so a page can link to any document of the corpus.
+ *
+ * Nothing is written during either phase, so a corpus that cannot be resolved leaves the output tree
+ * untouched.
+ */
+final readonly class CorpusRegistration implements CorpusRegistrationInterface
+{
+    public function __construct(
+        private CorpusCollector $corpus,
+        private RouteProviderFactoryInterface $providers,
+        private RouteTable $routes,
+    ) {}
+
+    /**
+     * @param list<Project> $projects Ordered by site path
+     *
+     * @throws InvalidArgumentException When a strategy refuses a project it was given
+     */
+    #[Override]
+    public function resolve(array $projects, Strategy $strategy): Corpus
+    {
+        $corpus = $this->corpus->collect($projects, $strategy);
+
+        $this->providers->create($corpus)?->registerRoutes($this->routes->collector);
+
+        return $corpus;
+    }
+}

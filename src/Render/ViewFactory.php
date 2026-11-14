@@ -90,8 +90,8 @@ final readonly class ViewFactory
             creationContext: new ServiceManager(),
             config         : [
                 'factories' => [
-                    LayoutHelper::class          => InvokableFactory::class,
-                    NavigationMarkup::NAME       => static fn(): NavigationMarkup => new NavigationMarkup(
+                    LayoutHelper::class    => InvokableFactory::class,
+                    NavigationMarkup::NAME => static fn(): NavigationMarkup => new NavigationMarkup(
                         navigation: $navigation,
                     ),
                 ],

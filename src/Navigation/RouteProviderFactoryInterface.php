@@ -24,6 +24,8 @@ use Webware\Router\RouteProviderInterface;
  * build and it is discarded with the build. This factory is the seam that makes that explicit, and
  * the place where a disabled navigation block resolves to no provider at all rather than to a
  * provider that registers nothing.
+ *
+ * @internal
  */
 interface RouteProviderFactoryInterface
 {

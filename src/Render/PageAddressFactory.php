@@ -91,12 +91,16 @@ final readonly class PageAddressFactory
             '%s/%s/%s.html',
             $target->project->sitePath,
             $target->version,
-            substr(self::validated($documentPath), 0, -3),
+            substr(
+                string: self::validated($documentPath),
+                offset: 0,
+                length: -3,
+            ),
         );
 
         return new PageAddress(
             file   : $file,
-            address: 'https://' . $this->hostname . '/' . $file,
+            address: "https://{$this->hostname}/{$file}",
         );
     }
 }

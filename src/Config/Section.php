@@ -72,14 +72,6 @@ final readonly class Section
     }
 
     /**
-     * @throws InvalidSiteConfigException When the key is present but does not hold an object
-     */
-    public function optionalObject(string $key): ?self
-    {
-        return array_key_exists($key, $this->members) ? $this->object($key) : null;
-    }
-
-    /**
      * @throws InvalidSiteConfigException When the key is present but does not hold a boolean
      */
     public function optionalBool(string $key): ?bool
@@ -96,6 +88,14 @@ final readonly class Section
         }
 
         return $value;
+    }
+
+    /**
+     * @throws InvalidSiteConfigException When the key is present but does not hold an object
+     */
+    public function optionalObject(string $key): ?self
+    {
+        return array_key_exists($key, $this->members) ? $this->object($key) : null;
     }
 
     /**

@@ -63,8 +63,8 @@ final readonly class SiteRendererFactory implements SiteRendererFactoryInterface
                 navId : $config->navigation->identifier,
             )
             : null;
-        $views       = new ViewFactory();
-        $templates   = $views->create(
+        $views     = new ViewFactory();
+        $templates = $views->create(
             config    : $config,
             navigation: $navigation,
         );
@@ -81,18 +81,20 @@ final readonly class SiteRendererFactory implements SiteRendererFactoryInterface
                 tree     : $tree,
                 addresses: $addresses,
                 source   : $source,
-                renderer : new DocumentRenderer(
-                    reader: new DocumentReader(parser: new MarkdownParser(environment: $environment)),
-                    html  : new HtmlRenderer(environment: $environment),
-                ),
-                pages    : $pages,
-                links    : null === $navigation
-                    ? null
-                    : new LinkRewriter(
-                        router: $this->routes->router,
-                        links : $this->links,
+                presenter: new PagePresenter(
+                    renderer  : new DocumentRenderer(
+                        reader: new DocumentReader(parser: new MarkdownParser(environment: $environment)),
+                        html  : new HtmlRenderer(environment: $environment),
                     ),
-                navigation: $navigation,
+                    pages     : $pages,
+                    links     : null === $navigation
+                        ? null
+                        : new LinkRewriter(
+                            router: $this->routes->router,
+                            links : $this->links,
+                        ),
+                    navigation: $navigation,
+                ),
             ),
             index   : new SiteIndex(
                 tree     : $tree,

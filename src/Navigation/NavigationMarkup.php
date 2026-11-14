@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Navigation;
 
 use Laminas\View\Helper\HelperInterface;
-use Override;
 
 /**
  * The view helper the layout reads the sidebar markup from.
@@ -34,7 +33,9 @@ final class NavigationMarkup implements HelperInterface
     /** The helper name the layout asks for, which is also the view method it calls. */
     public const string NAME = 'navigationMarkup';
 
-    public function __construct(private readonly ?PageNavigation $navigation = null) {}
+    public function __construct(
+        private readonly ?PageNavigation $navigation = null,
+    ) {}
 
     public function __invoke(): string
     {

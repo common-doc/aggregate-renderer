@@ -16,6 +16,7 @@ namespace CommonDoc\Aggregate\Config;
 
 use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
 use CommonDoc\Aggregate\Version\Strategy;
+use InvalidArgumentException;
 use JsonException;
 
 use function dirname;
@@ -50,6 +51,7 @@ final class SiteConfigReader
 
     /**
      * @throws InvalidSiteConfigException When the file cannot be read or does not satisfy the schema
+     * @throws InvalidArgumentException   When the navigation config rejects the name it was given
      */
     public function read(string $path): SiteConfig
     {
@@ -58,40 +60,20 @@ final class SiteConfigReader
 
         $root->rejectUnknownKeys(['organization', 'output', 'site', 'versions', 'templates']);
 
-        $organization = $root->object('organization');
-        $organization->rejectUnknownKeys(['name', 'tokenEnvVar']);
-
-        $output = $root->object('output');
-        $output->rejectUnknownKeys(['directory', 'reportPath', 'cacheDirectory']);
-
-        $site = $root->object('site');
-        $site->rejectUnknownKeys(['hostname', 'navigation']);
-
-        $name        = $organization->string('name');
-        $tokenEnvVar = $this->tokenVariable($organization->string('tokenEnvVar'));
-
-        /** @var non-empty-string $outputDirectory */
-        $outputDirectory = $this->resolved($output->string('directory'), $base);
-        /** @var non-empty-string $reportPath */
-        $reportPath = $this->resolved($output->string('reportPath'), $base);
-        /** @var non-empty-string $cacheDirectory */
-        $cacheDirectory = $this->resolved(
-            $output->optionalString('cacheDirectory') ?? self::CACHE_DIRECTORY_DEFAULT,
-            $base,
-        );
-
-        $hostname = $this->hostname($site->string('hostname'));
+        $organization = $this->organization($root);
+        $output       = $this->output($root, $base);
+        $site         = $this->site($root);
 
         return new SiteConfig(
-            $name,
-            $tokenEnvVar,
-            $outputDirectory,
-            $reportPath,
-            $cacheDirectory,
-            $hostname,
-            $this->strategy($root),
-            $this->templateMap($root, $base),
-            $this->navigation($site),
+            organization   : $organization['name'],
+            tokenEnvVar    : $organization['tokenEnvVar'],
+            outputDirectory: $output['directory'],
+            reportPath     : $output['reportPath'],
+            cacheDirectory : $output['cacheDirectory'],
+            hostname       : $site['hostname'],
+            strategy       : $this->strategy($root),
+            templateMap    : $this->templateMap($root, $base),
+            navigation     : $site['navigation'],
         );
     }
 
@@ -127,37 +109,6 @@ final class SiteConfigReader
     }
 
     /**
-     * @throws InvalidSiteConfigException When the configured identifier is not a single name
-     */
-    private function navigation(Section $site): NavigationConfig
-    {
-        $navigation = $site->optionalObject('navigation');
-
-        if (null === $navigation) {
-            return new NavigationConfig();
-        }
-
-        $navigation->rejectUnknownKeys(['enabled', 'identifier']);
-
-        $identifier = $navigation->optionalString('identifier') ?? NavigationConfig::DEFAULT_IDENTIFIER;
-
-        if (preg_match(NavigationConfig::IDENTIFIER_PATTERN, $identifier) !== 1) {
-            throw InvalidSiteConfigException::at(
-                'site.navigation.identifier',
-                sprintf(
-                    '"%s" is not a name of letters, digits, hyphens and underscores.',
-                    $identifier,
-                ),
-            );
-        }
-
-        return new NavigationConfig(
-            enabled   : $navigation->optionalBool('enabled') ?? false,
-            identifier: $identifier,
-        );
-    }
-
-    /**
      * @param non-empty-string $configured
      *
      * @return non-empty-string
@@ -176,6 +127,59 @@ final class SiteConfigReader
         return $configured;
     }
 
+    /**
+     * The organization block, read as the one pair it declares.
+     *
+     * @return array{name: non-empty-string, tokenEnvVar: non-empty-string}
+     *
+     * @throws InvalidSiteConfigException When the block is absent or a value is not acceptable
+     */
+    private function organization(Section $root): array
+    {
+        $organization = $root->object('organization');
+        $organization->rejectUnknownKeys(['name', 'tokenEnvVar']);
+
+        $name = $organization->string('name');
+
+        return [
+            'name'        => $name,
+            'tokenEnvVar' => $this->tokenVariable($organization->string('tokenEnvVar')),
+        ];
+    }
+
+    /**
+     * The output block, with every path resolved against the directory site.json was read from.
+     *
+     * @return array{
+     *     directory: non-empty-string,
+     *     reportPath: non-empty-string,
+     *     cacheDirectory: non-empty-string,
+     * }
+     *
+     * @throws InvalidSiteConfigException When the block is absent or a path is not acceptable
+     */
+    private function output(Section $root, string $base): array
+    {
+        $output = $root->object('output');
+        $output->rejectUnknownKeys(['directory', 'reportPath', 'cacheDirectory']);
+
+        /** @var non-empty-string $directory */
+        $directory = $this->resolved($output->string('directory'), $base);
+        /** @var non-empty-string $reportPath */
+        $reportPath = $this->resolved($output->string('reportPath'), $base);
+        /** @var non-empty-string $cacheDirectory */
+        $cacheDirectory = $this->resolved(
+            $output->optionalString('cacheDirectory') ?? self::CACHE_DIRECTORY_DEFAULT,
+            $base,
+        );
+
+        return [
+            'directory'      => $directory,
+            'reportPath'     => $reportPath,
+            'cacheDirectory' => $cacheDirectory,
+        ];
+    }
+
     private function resolved(string $path, string $base): string
     {
         $joined = preg_match(self::ABSOLUTE_PATH_PATTERN, $path) === 1
@@ -183,6 +187,25 @@ final class SiteConfigReader
             : $base . DIRECTORY_SEPARATOR . $path;
 
         return str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $joined);
+    }
+
+    /**
+     * The site block: the host name the pages are addressed by, and how navigation is rendered.
+     *
+     * @return array{hostname: non-empty-string, navigation: NavigationConfig}
+     *
+     * @throws InvalidSiteConfigException When the block is absent or a value is not acceptable
+     * @throws InvalidArgumentException   When the navigation config rejects the name it was given
+     */
+    private function site(Section $root): array
+    {
+        $site = $root->object('site');
+        $site->rejectUnknownKeys(['hostname', 'navigation']);
+
+        return [
+            'hostname'   => $this->hostname($site->string('hostname')),
+            'navigation' => NavigationReader::read($site),
+        ];
     }
 
     /**

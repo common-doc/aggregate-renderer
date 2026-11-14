@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Config;
 
 use CommonDoc\Aggregate\Version\Strategy;
+use InvalidArgumentException;
 
 /**
  * The decoded site configuration, with the default supplied by the reader.
@@ -57,6 +58,8 @@ final readonly class SiteConfig
      * @param non-empty-string $cacheDirectory
      * @param non-empty-string $hostname
      * @param array<string, non-empty-string> $templateMap
+     *
+     * @throws InvalidArgumentException When the navigation config is not a valid one
      */
     // @mago-expect lint:excessive-parameter-list - accepted: the promoted properties are the required top-level keys of site-config.schema.json, so the count is fixed by the schema rather than by this class.
     public function __construct(

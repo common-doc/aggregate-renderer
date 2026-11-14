@@ -14,7 +14,10 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate;
 
+use CommonDoc\Aggregate\Build\Container\CorpusRegistrationFactoryFactory;
 use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
+use CommonDoc\Aggregate\Build\CorpusRegistrationFactory;
+use CommonDoc\Aggregate\Build\CorpusRegistrationFactoryInterface;
 use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
@@ -72,14 +75,16 @@ final class ConfigProvider
     {
         return [
             'aliases'   => [
-                ProjectSourceFactoryInterface::class => GitHubProjectSourceFactory::class,
-                ReportFileFactoryInterface::class    => ReportFileFactory::class,
-                SiteBuildFactoryInterface::class     => SiteBuildFactory::class,
-                SiteRendererFactoryInterface::class  => SiteRendererFactory::class,
-                SourceFactoryInterface::class        => SourceFactory::class,
+                CorpusRegistrationFactoryInterface::class => CorpusRegistrationFactory::class,
+                ProjectSourceFactoryInterface::class      => GitHubProjectSourceFactory::class,
+                ReportFileFactoryInterface::class         => ReportFileFactory::class,
+                SiteBuildFactoryInterface::class          => SiteBuildFactory::class,
+                SiteRendererFactoryInterface::class       => SiteRendererFactory::class,
+                SourceFactoryInterface::class             => SourceFactory::class,
             ],
             'factories' => [
                 BuildCommand::class               => BuildCommandFactory::class,
+                CorpusRegistrationFactory::class  => CorpusRegistrationFactoryFactory::class,
                 DocsSidebarRenderer::class        => InvokableFactory::class,
                 GitHubProjectSourceFactory::class => GitHubProjectSourceFactoryFactory::class,
                 LinkTotals::class                 => InvokableFactory::class,

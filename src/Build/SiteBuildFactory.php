@@ -16,12 +16,8 @@ namespace CommonDoc\Aggregate\Build;
 
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
-use CommonDoc\Aggregate\Navigation\DocumentRouteProviderFactory;
-use CommonDoc\Aggregate\Navigation\RouteTable;
-use CommonDoc\Aggregate\Render\PageAddressFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
-use CommonDoc\Aggregate\Version\StrategyFactory;
 use InvalidArgumentException;
 use League\CommonMark\Exception\AlreadyInitializedException;
 use Mezzio\Template\Exception\ExceptionInterface as TemplateExceptionInterface;
@@ -30,25 +26,24 @@ use Override;
 /**
  * Assembles the build one site configuration describes.
  *
- * The source is built once here and handed to both the renderer and the corpus collector, so a project
- * is listed and then read against one checkout cache. Everything the build needs that does not come
- * from the configuration is injected, so this is the only class that knows the order in which the
- * pieces fit together. Discovery is the one seam that is itself a factory, because the organization
- * it lists belongs to the configuration and therefore cannot be known when the container is built.
+ * The source is built once here and handed to both the renderer and the corpus registration, so a
+ * project is listed and then read against one checkout cache. Everything the build needs that does
+ * not come from the configuration is injected, so this is the only class that knows the order in
+ * which the pieces fit together. Discovery is the one seam that is itself a factory, because the
+ * organization it lists belongs to the configuration and therefore cannot be known when the container
+ * is built.
  *
- * The corpus collector and the route provider are built here rather than registered, because both are
- * scoped to one configuration: one holds the source for this build, the other holds the addresses and
- * the navigation setting for it. Neither can be a shared service without one build's corpus leaking
- * into the next.
+ * The corpus registration is built here rather than registered, because it is scoped to one
+ * configuration: it holds the source for this build and the addresses and navigation setting for it,
+ * and cannot be a shared service without one build's corpus leaking into the next.
  */
 final readonly class SiteBuildFactory implements SiteBuildFactoryInterface
 {
     public function __construct(
         private ProjectSourceFactoryInterface $projects,
         private SourceFactoryInterface $sources,
-        private StrategyFactory $strategies,
         private SiteRendererFactoryInterface $renderers,
-        private RouteTable $routes,
+        private CorpusRegistrationFactoryInterface $corpus,
         private LinkTotals $links,
     ) {}
 
@@ -68,20 +63,12 @@ final readonly class SiteBuildFactory implements SiteBuildFactoryInterface
 
         return new SiteBuild(
             discovery   : $this->projects->create(config: $config),
-            corpus      : new CorpusCollector(
-                source    : $source,
-                strategies: $this->strategies,
-            ),
+            corpus      : $this->corpus->create($config, $source),
             renderer    : $renderer,
             projectBuild: new ProjectBuild(
                 renderer: $renderer,
                 links   : $this->links,
             ),
-            providers   : new DocumentRouteProviderFactory(
-                addresses : new PageAddressFactory(hostname: $config->hostname),
-                navigation: $config->navigation,
-            ),
-            routes      : $this->routes,
             links       : $this->links,
         );
     }

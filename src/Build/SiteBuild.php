@@ -9,8 +9,6 @@ use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
 use CommonDoc\Aggregate\Exception\DiscoveryException;
 use CommonDoc\Aggregate\Exception\MissingCnameException;
-use CommonDoc\Aggregate\Navigation\RouteProviderFactoryInterface;
-use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Output\CnameFile;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
@@ -28,14 +26,14 @@ use function usort;
 /**
  * One build, from a configuration to a report file.
  *
- * The stages run in a fixed order, and every one of them is a collaborator: the corpus is resolved in
- * full, every page is registered as a route, each project is rendered, the extras and the site address
- * file are written, and the report is written last, so a report never describes a tree that was not
- * produced.
+ * The stages run in a fixed order, and every one of them is a collaborator: the corpus is resolved and
+ * every page registered as a route, each project is rendered, the extras and the site address file are
+ * written, and the report is written last, so a report never describes a tree that was not produced.
  *
  * The corpus is resolved, and its routes registered, before the first page is rendered. A link can
  * name a document in another project and a sidebar can name any page of the corpus, so both have to
- * exist before any page that could mention them is written. Nothing is written during that phase.
+ * exist before any page that could mention them is written. Nothing is written during that phase, and
+ * the collaborator that runs it hands back the corpus the render loop reads.
  *
  * A project that fails is recorded and the build continues, because one unavailable repository does
  * not invalidate the rest of the corpus. The exit code follows the totals: a complete corpus exits 0
@@ -45,11 +43,9 @@ final readonly class SiteBuild
 {
     public function __construct(
         private ProjectSourceInterface $discovery,
-        private CorpusCollector $corpus,
+        private CorpusRegistrationInterface $corpus,
         private SiteRendererInterface $renderer,
         private ProjectBuild $projectBuild,
-        private RouteProviderFactoryInterface $providers,
-        private RouteTable $routes,
         private LinkTotals $links,
     ) {}
 
@@ -71,9 +67,7 @@ final readonly class SiteBuild
         $results  = [];
         $rendered = [];
 
-        $corpus = $this->corpus->collect($this->projects(), $config->strategy);
-
-        $this->providers->create($corpus)?->registerRoutes($this->routes->collector);
+        $corpus = $this->corpus->resolve($this->projects(), $config->strategy);
 
         foreach ($corpus->projects as $project) {
             $outcome = $this->projectBuild->render($project);

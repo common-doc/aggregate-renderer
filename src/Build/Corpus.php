@@ -19,5 +19,7 @@ final readonly class Corpus
     /**
      * @param list<ProjectCorpus> $projects Ordered by site path, which is the order the report requires
      */
-    public function __construct(public array $projects) {}
+    public function __construct(
+        public array $projects,
+    ) {}
 }

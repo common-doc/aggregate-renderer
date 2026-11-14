@@ -12,7 +12,7 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
-namespace CommonDoc\Aggregate\Navigation;
+namespace CommonDoc\Aggregate\Http\Middleware;
 
 use Override;
 use Psr\Http\Message\ResponseInterface;

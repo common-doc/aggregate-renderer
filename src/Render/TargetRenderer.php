@@ -20,13 +20,9 @@ use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Exception\UnaddressableDocumentException;
-use CommonDoc\Aggregate\Navigation\DocumentRouteProvider;
-use CommonDoc\Aggregate\Navigation\PageNavigation;
 use CommonDoc\Aggregate\Output\OutputTree;
 use CommonDoc\Aggregate\Source\SourceInterface;
 use CommonDoc\Aggregate\Version\Target;
-use CommonDoc\View\Page;
-use CommonDoc\View\PageContext;
 use InvalidArgumentException;
 use League\CommonMark\Exception\CommonMarkException;
 use Mezzio\Template\Exception\ExceptionInterface;
@@ -54,10 +50,7 @@ final readonly class TargetRenderer
         private OutputTree $tree,
         private PageAddressFactory $addresses,
         private SourceInterface $source,
-        private DocumentRenderer $renderer,
-        private PageContext $pages,
-        private ?LinkRewriter $links = null,
-        private ?PageNavigation $navigation = null,
+        private PagePresenter $presenter,
     ) {}
 
     /**
@@ -158,6 +151,8 @@ final readonly class TargetRenderer
     }
 
     /**
+     * @param non-empty-string $documentPath
+     *
      * @throws InvalidArgumentException When a page result is asked for a status its reason code cannot carry
      */
     private function renderPage(
@@ -167,26 +162,10 @@ final readonly class TargetRenderer
         string $contents,
     ): PageResult {
         try {
-            $this->pages->set(new Page(
-                label       : PageLabel::for($target, $documentPath),
-                projectName : $target->project->name,
-                projectSlug : $target->project->sitePath,
-                sourcePath  : $documentPath,
-                url         : $address->address,
-                versionLabel: $target->version,
-            ));
-
-            $this->navigation?->activate(DocumentRouteProvider::nameFor($target, $documentPath));
-
-            try {
-                $rendered = $this->renderer->render(markdown: $contents);
-                $rendered = $this->links?->rewrite($rendered, $target, $documentPath) ?? $rendered;
-            } finally {
-                $this->pages->clear();
-                $this->navigation?->deactivate();
-            }
-
-            $this->tree->write($address->file, $rendered);
+            $this->tree->write(
+                relativePath: $address->file,
+                contents    : $this->presenter->html($address, $target, $documentPath, $contents),
+            );
         } catch (CommonMarkException|ExceptionInterface|InvalidArgumentException|RuntimeException) {
             return new PageResult(
                 address   : $address->address,

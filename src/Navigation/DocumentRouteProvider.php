@@ -16,9 +16,11 @@ namespace CommonDoc\Aggregate\Navigation;
 
 use CommonDoc\Aggregate\Build\Corpus;
 use CommonDoc\Aggregate\Build\TargetCorpus;
+use CommonDoc\Aggregate\Http\Middleware\NoOpMiddleware;
 use CommonDoc\Aggregate\Render\PageAddressFactory;
 use CommonDoc\Aggregate\Render\PageLabel;
 use CommonDoc\Aggregate\Version\Target;
+use InvalidArgumentException;
 use Mezzio\Router\Exception\DuplicateRouteException;
 use Mezzio\Router\RouteCollectorInterface;
 use Override;
@@ -61,6 +63,8 @@ final readonly class DocumentRouteProvider implements RouteProviderInterface
      * different addresses.
      *
      * @param non-empty-string $documentPath Document path relative to the project's documentation directory
+     *
+     * @return non-empty-string
      */
     public static function nameFor(Target $target, string $documentPath): string
     {
@@ -68,12 +72,21 @@ final readonly class DocumentRouteProvider implements RouteProviderInterface
             'p|%s|%s|%s',
             $target->project->sitePath,
             $target->version,
-            str_replace('/', '|', substr($documentPath, 0, -3)),
+            str_replace(
+                search : '/',
+                replace: '|',
+                subject: substr(
+                    string: $documentPath,
+                    offset: 0,
+                    length: -3,
+                ),
+            ),
         );
     }
 
     /**
      * @throws DuplicateRouteException When two documents publish to one path or one name
+     * @throws InvalidArgumentException When a document path cannot be turned into a page address
      */
     #[Override]
     public function registerRoutes(RouteCollectorInterface $routeCollector): void
@@ -128,7 +141,7 @@ final readonly class DocumentRouteProvider implements RouteProviderInterface
 
         return self::nameFor(
             $target->target,
-            '.' === $directory ? 'index.md' : $directory . '/index.md',
+            '.' === $directory ? 'index.md' : "{$directory}/index.md",
         );
     }
 }

@@ -35,6 +35,11 @@ use const ENT_QUOTES;
  */
 final readonly class DocsSidebarRenderer implements RendererInterface
 {
+    private static function escape(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES, encoding: 'UTF-8');
+    }
+
     /**
      * @param array<string, mixed> $options
      */
@@ -54,7 +59,7 @@ final readonly class DocsSidebarRenderer implements RendererInterface
             $html .= $this->item($container, $item);
         }
 
-        return $html . '</ul></nav>';
+        return "{$html}</ul></nav>";
     }
 
     private function item(NavigationContainer $container, NavigationItem $item): string
@@ -73,7 +78,7 @@ final readonly class DocsSidebarRenderer implements RendererInterface
         );
 
         if (! $item->hasChildren()) {
-            return $html . '</li>';
+            return "{$html}</li>";
         }
 
         $html .= '<ul class="docs-nav-children">';
@@ -82,11 +87,6 @@ final readonly class DocsSidebarRenderer implements RendererInterface
             $html .= $this->item($container, $child);
         }
 
-        return $html . '</ul></li>';
-    }
-
-    private static function escape(string $value): string
-    {
-        return htmlspecialchars($value, ENT_QUOTES, encoding: 'UTF-8');
+        return "{$html}</ul></li>";
     }
 }

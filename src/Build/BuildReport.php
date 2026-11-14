@@ -35,12 +35,12 @@ final readonly class BuildReport
     /** @var list<ProjectResult> */
     public array $projects;
 
-    /** @var array<string, int> */
+    /** @var array<string, non-negative-int> */
     public array $links;
 
     /**
-     * @param list<ProjectResult> $projects Ordered by site path
-     * @param array<string, int>  $links    How many hrefs of each kind the build found
+     * @param list<ProjectResult>            $projects Ordered by site path
+     * @param array<string, non-negative-int> $links   How many hrefs of each kind the build found
      *
      * @throws InvalidArgumentException When the exit code, the projects or the totals disagree
      */

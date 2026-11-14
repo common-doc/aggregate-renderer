@@ -27,12 +27,25 @@ namespace CommonDoc\Aggregate\Build;
  */
 final class LinkTotals
 {
-    /** @var array<string, int> */
+    /** @var array<string, non-negative-int> */
     private array $counts = [];
 
     public function __construct()
     {
         $this->reset();
+    }
+
+    public function add(LinkOutcome $outcome): void
+    {
+        $this->counts[$outcome->value] = $this->count($outcome) + 1;
+    }
+
+    /**
+     * @return non-negative-int
+     */
+    public function count(LinkOutcome $outcome): int
+    {
+        return $this->counts[$outcome->value] ?? 0;
     }
 
     public function reset(): void
@@ -44,21 +57,11 @@ final class LinkTotals
         }
     }
 
-    public function add(LinkOutcome $outcome): void
-    {
-        $this->counts[$outcome->value]++;
-    }
-
-    public function count(LinkOutcome $outcome): int
-    {
-        return $this->counts[$outcome->value];
-    }
-
     /**
      * The counts keyed by wire value, in the order the enum declares them, so two runs over an
      * unchanged corpus serialise identically.
      *
-     * @return array<string, int>
+     * @return array<string, non-negative-int>
      */
     public function toArray(): array
     {

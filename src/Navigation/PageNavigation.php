@@ -16,8 +16,6 @@ namespace CommonDoc\Aggregate\Navigation;
 
 use Webware\Navigation\View\Helper\Navigation;
 
-use function array_key_exists;
-
 /**
  * The sidebar markup for the page currently being rendered.
  *
