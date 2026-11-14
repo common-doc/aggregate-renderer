@@ -25,6 +25,15 @@ use PHPUnit\Framework\TestCase;
 final class DocTargetTest extends TestCase
 {
     #[Test]
+    public function onboardsWithTheConventionalDirectoryWhenThePropertyIsTrue(): void
+    {
+        static::assertSame(
+            'docs',
+            DocTarget::from([['property_name' => 'doc-target', 'value' => true]]),
+        );
+    }
+
+    #[Test]
     public function readsTheFirstMatchingPropertyOnly(): void
     {
         static::assertSame(
@@ -73,9 +82,15 @@ final class DocTargetTest extends TestCase
     }
 
     #[Test]
-    public function reportsNoTargetWhenThePropertyHoldsNoString(): void
+    public function reportsNoTargetWhenThePropertyHoldsANonStringNonBooleanValue(): void
     {
         static::assertNull(DocTarget::from([['property_name' => 'doc-target', 'value' => ['docs']]]));
+    }
+
+    #[Test]
+    public function reportsNoTargetWhenThePropertyHoldsNull(): void
+    {
+        static::assertNull(DocTarget::from([['property_name' => 'doc-target', 'value' => null]]));
     }
 
     #[Test]
@@ -88,6 +103,12 @@ final class DocTargetTest extends TestCase
     public function reportsNoTargetWhenThePropertyIsAbsent(): void
     {
         static::assertNull(DocTarget::from([['property_name' => 'unrelated', 'value' => 'docs']]));
+    }
+
+    #[Test]
+    public function reportsNoTargetWhenThePropertyIsFalse(): void
+    {
+        static::assertNull(DocTarget::from([['property_name' => 'doc-target', 'value' => false]]));
     }
 
     #[Test]

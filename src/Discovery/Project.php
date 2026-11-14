@@ -22,9 +22,9 @@ use function sprintf;
 /**
  * One onboarded repository, as discovery reports it.
  *
- * A repository is onboarded when its `doc-target` custom property carries a directory, so a project
- * always names the directory its sources live in. A repository without that property produces no
- * project at all rather than one with an empty directory.
+ * A repository is onboarded when its `doc-target` custom property is boolean `true` or names a
+ * directory, so a project always names the directory its sources live in. A repository without
+ * that property produces no project at all rather than one with an empty directory.
  */
 final readonly class Project
 {

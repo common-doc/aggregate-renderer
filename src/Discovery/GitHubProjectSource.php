@@ -29,8 +29,9 @@ use function sprintf;
  * Discovers the onboarded repositories of one GitHub organization.
  *
  * Two endpoints, and no vendor SDK: the organization's repositories, then each repository's custom
- * property values. A repository is onboarded when its `doc-target` property carries a directory, so
- * the property is the whole onboarding cost and a repository without it is simply not listed.
+ * property values. A repository is onboarded when its `doc-target` property is boolean `true` or
+ * names a directory, so the property is the whole onboarding cost and a repository without it is
+ * simply not listed.
  *
  * A failure here is not a project defect: nothing was read, so nothing can be reported per project.
  * Every failure names a reason code and stops the run before rendering.
