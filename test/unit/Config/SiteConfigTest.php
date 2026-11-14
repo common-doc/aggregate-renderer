@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Config;
 
+use CommonDoc\Aggregate\Config\NavigationConfig;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Version\Strategy;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -22,7 +23,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(SiteConfig::class)]
+#[CoversClass(NavigationConfig::class)]
 #[CoversMethod(SiteConfig::class, '__construct')]
+#[CoversMethod(NavigationConfig::class, '__construct')]
 final class SiteConfigTest extends TestCase
 {
     private static function config(): SiteConfig

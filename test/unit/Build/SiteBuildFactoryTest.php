@@ -14,18 +14,17 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Build;
 
+use CommonDoc\Aggregate\Build\CorpusRegistrationFactoryInterface;
 use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuild;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Discovery\ProjectSourceInterface;
-use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererInterface;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceInterface;
-use CommonDoc\Aggregate\Version\StrategyFactory;
 use CommonDocTest\Aggregate\Support\Config;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -33,6 +32,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(SiteBuildFactory::class)]
+#[CoversClass(LinkTotals::class)]
 #[CoversMethod(SiteBuildFactory::class, '__construct')]
 #[CoversMethod(SiteBuildFactory::class, 'create')]
 final class SiteBuildFactoryTest extends TestCase
@@ -81,12 +81,11 @@ final class SiteBuildFactoryTest extends TestCase
         $projects->method('create')->willReturn($this->createStub(ProjectSourceInterface::class));
 
         return new SiteBuildFactory(
-            projects  : $projects,
-            sources   : $sources ?? $this->createStub(SourceFactoryInterface::class),
-            strategies: new StrategyFactory(),
-            renderers : $renderers ?? $this->createStub(SiteRendererFactoryInterface::class),
-            routes    : RouteTable::create(),
-            links     : new LinkTotals(),
+            projects : $projects,
+            sources  : $sources ?? $this->createStub(SourceFactoryInterface::class),
+            renderers: $renderers ?? $this->createStub(SiteRendererFactoryInterface::class),
+            corpus   : $this->createStub(CorpusRegistrationFactoryInterface::class),
+            links    : new LinkTotals(),
         );
     }
 }

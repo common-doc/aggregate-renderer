@@ -26,9 +26,16 @@ use PHPUnit\Framework\TestCase;
 final class PageLabelTest extends TestCase
 {
     #[Test]
-    public function namesTheProjectForTheVersionLandingPage(): void
+    public function humanisesAPlainDocumentName(): void
     {
-        static::assertSame('aggregate-renderer', PageLabel::for(Targets::target(), 'index.md'));
+        static::assertSame(
+            'Flow Charts',
+            PageLabel::for(Targets::target(), 'flow-charts.md'),
+        );
+        static::assertSame(
+            'Getting Started',
+            PageLabel::for(Targets::target(), 'guide/getting_started.md'),
+        );
     }
 
     #[Test]
@@ -45,15 +52,8 @@ final class PageLabelTest extends TestCase
     }
 
     #[Test]
-    public function humanisesAPlainDocumentName(): void
+    public function namesTheProjectForTheVersionLandingPage(): void
     {
-        static::assertSame(
-            'Flow Charts',
-            PageLabel::for(Targets::target(), 'flow-charts.md'),
-        );
-        static::assertSame(
-            'Getting Started',
-            PageLabel::for(Targets::target(), 'guide/getting_started.md'),
-        );
+        static::assertSame('aggregate-renderer', PageLabel::for(Targets::target(), 'index.md'));
     }
 }

@@ -25,6 +25,7 @@ use CommonDoc\Aggregate\Render\DocumentReader;
 use CommonDoc\Aggregate\Render\DocumentRenderer;
 use CommonDoc\Aggregate\Render\LinkRewriter;
 use CommonDoc\Aggregate\Render\PageAddressFactory;
+use CommonDoc\Aggregate\Render\PagePresenter;
 use CommonDoc\Aggregate\Render\TargetRenderer;
 use CommonDoc\Aggregate\Render\ViewFactory;
 use CommonDoc\Aggregate\Source\SourceInterface;
@@ -51,10 +52,15 @@ use function is_file;
 #[CoversClass(TargetRenderer::class)]
 #[CoversClass(UnaddressableDocumentException::class)]
 #[CoversClass(DocumentReader::class)]
+#[CoversClass(LinkTotals::class)]
+#[CoversClass(PagePresenter::class)]
 #[CoversMethod(TargetRenderer::class, '__construct')]
 #[CoversMethod(TargetRenderer::class, 'render')]
 #[CoversMethod(UnaddressableDocumentException::class, 'at')]
 #[CoversMethod(DocumentReader::class, 'read')]
+#[CoversMethod(LinkTotals::class, 'add')]
+#[CoversMethod(PagePresenter::class, '__construct')]
+#[CoversMethod(PagePresenter::class, 'html')]
 final class TargetRendererTest extends TestCase
 {
     private TemporaryDirectory $directory;
@@ -78,7 +84,10 @@ final class TargetRendererTest extends TestCase
         $this->renderer(
             documents: ['getting_started.md' => "# Start\n"],
             templates: $templates,
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['getting_started.md']));
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['getting_started.md'],
+        ));
 
         $page = $seen[ViewFactory::DOCUMENT]['page'] ?? null;
 
@@ -104,7 +113,10 @@ final class TargetRendererTest extends TestCase
             documents: ['index.md' => "# Home\n"],
             templates: $templates,
             pages    : $context,
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md']));
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['index.md'],
+        ));
 
         static::assertNull($context->current());
     }
@@ -117,7 +129,10 @@ final class TargetRendererTest extends TestCase
         $this->renderer(
             documents: ['index.md' => "# Home\n"],
             pages    : $context,
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md']));
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['index.md'],
+        ));
 
         static::assertNull($context->current());
     }
@@ -126,7 +141,10 @@ final class TargetRendererTest extends TestCase
     public function failsEveryDocumentWhenOneCannotBeAddressed(): void
     {
         $pages = $this->renderer(documents: ['index.md' => "# Home\n", '../escape.md' => "# Escape\n"])
-            ->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md', '../escape.md']));
+            ->render(corpus: new TargetCorpus(
+                target: $this->target(),
+                documents: ['index.md', '../escape.md'],
+            ));
 
         static::assertCount(2, $pages);
 
@@ -143,7 +161,10 @@ final class TargetRendererTest extends TestCase
     public function ordersThePagesByAddressRatherThanByTheOrderTheSourceListedThem(): void
     {
         $pages = $this->renderer(documents: ['guide/beta.md' => "# Beta\n", 'guide/alpha.md' => "# Alpha\n"])
-            ->render(corpus: new TargetCorpus(target: $this->target(), documents: ['guide/beta.md', 'guide/alpha.md']));
+            ->render(corpus: new TargetCorpus(
+                target: $this->target(),
+                documents: ['guide/beta.md', 'guide/alpha.md'],
+            ));
 
         static::assertSame(
             [
@@ -165,7 +186,10 @@ final class TargetRendererTest extends TestCase
         $pages = $this->renderer(
             documents: ['index.md' => "# Home\n"],
             templates: $templates,
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md']));
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['index.md'],
+        ));
 
         static::assertSame(PageStatus::Failed, $pages[0]->status);
         static::assertSame(ReasonCode::RenderFailed, $pages[0]->reasonCode);
@@ -181,7 +205,10 @@ final class TargetRendererTest extends TestCase
         $pages = $this->renderer(
             documents: ['index.md' => "# Home\n"],
             templates: $templates,
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md']));
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['index.md'],
+        ));
 
         static::assertSame(PageStatus::Failed, $pages[0]->status);
         static::assertSame(ReasonCode::RenderFailed, $pages[0]->reasonCode);
@@ -198,7 +225,10 @@ final class TargetRendererTest extends TestCase
             documents: ['index.md' => "# Home\n"],
             templates: $templates,
         )
-            ->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md']));
+            ->render(corpus: new TargetCorpus(
+                target: $this->target(),
+                documents: ['index.md'],
+            ));
 
         static::assertSame(PageStatus::Failed, $pages[0]->status);
         static::assertSame(ReasonCode::RenderFailed, $pages[0]->reasonCode);
@@ -210,37 +240,10 @@ final class TargetRendererTest extends TestCase
     {
         static::assertSame(
             [],
-            $this->renderer()->render(corpus: new TargetCorpus(target: $this->target(), documents: [])),
-        );
-    }
-
-    #[Test]
-    public function theExceptionNamesTheVersionAndTheDocumentThatCouldNotBeAddressed(): void
-    {
-        $exception = UnaddressableDocumentException::at($this->target(), '../escape.md');
-
-        static::assertSame(ReasonCode::RenderFailed, $exception->reasonCode);
-        static::assertStringContainsString('2.0', $exception->getMessage());
-        static::assertStringContainsString('../escape.md', $exception->getMessage());
-    }
-
-    #[Test]
-    public function writesEveryPageOfTheTargetUnderItsVersionDirectory(): void
-    {
-        $pages = $this->renderer(documents: ['guide/setup.md' => "# Setup\n\nTwo steps.\n"])
-            ->render(corpus: new TargetCorpus(target: $this->target(), documents: ['guide/setup.md']));
-
-        static::assertCount(1, $pages);
-        static::assertSame(
-            'https://docs.example.org/aggregate-renderer/2.0/guide/setup.html',
-            $pages[0]->address,
-        );
-        static::assertSame(PageStatus::Rendered, $pages[0]->status);
-        static::assertNull($pages[0]->reasonCode);
-        static::assertFalse($pages[0]->fromCache);
-        static::assertStringContainsString(
-            'Two steps.',
-            $this->tree()->read('aggregate-renderer/2.0/guide/setup.html'),
+            $this->renderer()->render(corpus: new TargetCorpus(
+                target: $this->target(),
+                documents: [],
+            )),
         );
     }
 
@@ -250,26 +253,14 @@ final class TargetRendererTest extends TestCase
         $pages = $this->renderer(
             documents: ['guide/setup.md' => "See [home](../index.md).\n"],
             links    : $this->links(documents: ['index.md', 'guide/setup.md']),
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['guide/setup.md']));
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['guide/setup.md'],
+        ));
 
         static::assertSame(PageStatus::Rendered, $pages[0]->status);
         static::assertStringContainsString(
             'href="/aggregate-renderer/2.0/index.html"',
-            $this->tree()->read('aggregate-renderer/2.0/guide/setup.html'),
-        );
-    }
-
-    #[Test]
-    public function writesALinkToAnUnpublishedDocumentExactlyAsWritten(): void
-    {
-        $pages = $this->renderer(
-            documents: ['guide/setup.md' => "See [elsewhere](missing.md).\n"],
-            links    : $this->links(documents: ['guide/setup.md']),
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['guide/setup.md']));
-
-        static::assertSame(PageStatus::Rendered, $pages[0]->status);
-        static::assertStringContainsString(
-            'href="missing.md"',
             $this->tree()->read('aggregate-renderer/2.0/guide/setup.html'),
         );
     }
@@ -284,11 +275,65 @@ final class TargetRendererTest extends TestCase
             documents: ['index.md' => "# Home\n"],
             templates: $templates,
             links    : $this->links(documents: ['index.md']),
-        )->render(corpus: new TargetCorpus(target: $this->target(), documents: ['index.md']));
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['index.md'],
+        ));
 
         static::assertSame(PageStatus::Failed, $pages[0]->status);
         static::assertSame(ReasonCode::RenderFailed, $pages[0]->reasonCode);
         static::assertFalse(is_file("{$this->directory->path}/build/aggregate-renderer/2.0/index.html"));
+    }
+
+    #[Test]
+    public function theExceptionNamesTheVersionAndTheDocumentThatCouldNotBeAddressed(): void
+    {
+        $exception = UnaddressableDocumentException::at($this->target(), '../escape.md');
+
+        static::assertSame(ReasonCode::RenderFailed, $exception->reasonCode);
+        static::assertStringContainsString('2.0', $exception->getMessage());
+        static::assertStringContainsString('../escape.md', $exception->getMessage());
+    }
+
+    #[Test]
+    public function writesALinkToAnUnpublishedDocumentExactlyAsWritten(): void
+    {
+        $pages = $this->renderer(
+            documents: ['guide/setup.md' => "See [elsewhere](missing.md).\n"],
+            links    : $this->links(documents: ['guide/setup.md']),
+        )->render(corpus: new TargetCorpus(
+            target: $this->target(),
+            documents: ['guide/setup.md'],
+        ));
+
+        static::assertSame(PageStatus::Rendered, $pages[0]->status);
+        static::assertStringContainsString(
+            'href="missing.md"',
+            $this->tree()->read('aggregate-renderer/2.0/guide/setup.html'),
+        );
+    }
+
+    #[Test]
+    public function writesEveryPageOfTheTargetUnderItsVersionDirectory(): void
+    {
+        $pages = $this->renderer(documents: ['guide/setup.md' => "# Setup\n\nTwo steps.\n"])
+            ->render(corpus: new TargetCorpus(
+                target: $this->target(),
+                documents: ['guide/setup.md'],
+            ));
+
+        static::assertCount(1, $pages);
+        static::assertSame(
+            'https://docs.example.org/aggregate-renderer/2.0/guide/setup.html',
+            $pages[0]->address,
+        );
+        static::assertSame(PageStatus::Rendered, $pages[0]->status);
+        static::assertNull($pages[0]->reasonCode);
+        static::assertFalse($pages[0]->fromCache);
+        static::assertStringContainsString(
+            'Two steps.',
+            $this->tree()->read('aggregate-renderer/2.0/guide/setup.html'),
+        );
     }
 
     protected function setUp(): void
@@ -308,6 +353,17 @@ final class TargetRendererTest extends TestCase
         return new ViewFactory()->environment(
             templates: $templates ?? new ViewFactory()->create(config: Config::site()),
             pages    : $pages,
+        );
+    }
+
+    /**
+     * @param list<non-empty-string> $documents
+     */
+    private function links(array $documents): LinkRewriter
+    {
+        return new LinkRewriter(
+            router: Targets::routeTable(documents: $documents)->router,
+            links : new LinkTotals(),
         );
     }
 
@@ -332,17 +388,6 @@ final class TargetRendererTest extends TestCase
             templates: $templates,
             pages    : $pages,
             links    : $links,
-        );
-    }
-
-    /**
-     * @param list<non-empty-string> $documents
-     */
-    private function links(array $documents): LinkRewriter
-    {
-        return new LinkRewriter(
-            router: Targets::routeTable(documents: $documents)->router,
-            links : new LinkTotals(),
         );
     }
 
@@ -375,12 +420,14 @@ final class TargetRendererTest extends TestCase
             tree     : $this->tree(),
             addresses: new PageAddressFactory(hostname: 'docs.example.org'),
             source   : $source,
-            renderer : new DocumentRenderer(
-                reader: new DocumentReader(parser: new MarkdownParser(environment: $environment)),
-                html  : new HtmlRenderer(environment: $environment),
+            presenter: new PagePresenter(
+                renderer: new DocumentRenderer(
+                    reader: new DocumentReader(parser: new MarkdownParser(environment: $environment)),
+                    html  : new HtmlRenderer(environment: $environment),
+                ),
+                pages   : $pages,
+                links   : $links,
             ),
-            pages    : $pages,
-            links    : $links,
         );
     }
 

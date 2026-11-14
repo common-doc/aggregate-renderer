@@ -31,6 +31,7 @@ use function sprintf;
 #[CoversMethod(Section::class, 'optionalObject')]
 #[CoversMethod(Section::class, 'string')]
 #[CoversMethod(Section::class, 'optionalString')]
+#[CoversMethod(Section::class, 'optionalBool')]
 #[CoversMethod(Section::class, 'rejectUnknownKeys')]
 final class SectionTest extends TestCase
 {
@@ -61,6 +62,20 @@ final class SectionTest extends TestCase
     public function listsMemberNamesAsStrings(): void
     {
         static::assertSame(['organization', 'hostname', 'empty', 'count'], $this->root()->keys());
+    }
+
+    #[Test]
+    public function readsAnOptionalBoolAsNullWhenItIsAbsent(): void
+    {
+        static::assertNull($this->root()->optionalBool('versions'));
+    }
+
+    #[Test]
+    public function readsAnOptionalBoolWhenItIsPresent(): void
+    {
+        $section = new Section(['enabled' => true], 'site.json');
+
+        static::assertTrue($section->optionalBool('enabled'));
     }
 
     #[Test]
@@ -119,6 +134,14 @@ final class SectionTest extends TestCase
     public function rejectsAnAbsentRequiredString(): void
     {
         $this->assertRejected('versions', fn(): string => $this->root()->string('versions'));
+    }
+
+    #[Test]
+    public function rejectsAnOptionalBoolThatIsNotABoolean(): void
+    {
+        $section = new Section(['enabled' => 'yes'], 'site.json');
+
+        $this->assertRejected('enabled', static fn(): ?bool => $section->optionalBool('enabled'));
     }
 
     #[Test]

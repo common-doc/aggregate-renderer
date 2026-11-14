@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Config;
 
 use CommonDoc\Aggregate\Build\ReasonCode;
+use CommonDoc\Aggregate\Config\NavigationConfig;
+use CommonDoc\Aggregate\Config\NavigationReader;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Exception\InvalidSiteConfigException;
@@ -41,7 +43,11 @@ use const DIRECTORY_SEPARATOR;
 use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(SiteConfigReader::class)]
+#[CoversClass(NavigationConfig::class)]
+#[CoversClass(NavigationReader::class)]
 #[CoversMethod(SiteConfigReader::class, 'read')]
+#[CoversMethod(NavigationConfig::class, '__construct')]
+#[CoversMethod(NavigationReader::class, 'read')]
 final class SiteConfigReaderTest extends TestCase
 {
     private string $directory;

@@ -16,6 +16,9 @@ namespace CommonDocTest\Aggregate\Render;
 
 use CommonDoc\Aggregate\Build\LinkOutcome;
 use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Navigation\RouteTable;
+use CommonDoc\Aggregate\Render\DocumentPath;
+use CommonDoc\Aggregate\Render\LinkHref;
 use CommonDoc\Aggregate\Render\LinkRewriter;
 use CommonDocTest\Aggregate\Support\Targets;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -28,12 +31,43 @@ use function preg_match;
 use function sprintf;
 
 #[CoversClass(LinkRewriter::class)]
+#[CoversClass(DocumentPath::class)]
+#[CoversClass(LinkHref::class)]
+#[CoversClass(LinkTotals::class)]
+#[CoversClass(RouteTable::class)]
 #[CoversMethod(LinkRewriter::class, 'rewrite')]
+#[CoversMethod(DocumentPath::class, 'resolve')]
+#[CoversMethod(LinkHref::class, 'of')]
+#[CoversMethod(LinkTotals::class, 'add')]
+#[CoversMethod(LinkTotals::class, 'count')]
+#[CoversMethod(LinkTotals::class, 'toArray')]
 final class LinkRewriterTest extends TestCase
 {
     private LinkRewriter $rewriter;
 
     private LinkTotals $links;
+
+    #[Test]
+    public function countsAnEmptyHrefAsANonDocumentLink(): void
+    {
+        static::assertSame('', $this->hrefOf('', 'index.md'));
+        static::assertSame(1, $this->links->count(LinkOutcome::NonDocument));
+    }
+
+    #[Test]
+    public function countsAnImageWithoutRewritingIt(): void
+    {
+        $html = $this->rewriter->rewrite(
+            html    : '<p><a href="flow-charts.md">flow charts</a><img src="./diagram.png" alt="diagram"></p>',
+            target  : Targets::target(),
+            fromPath: 'index.md',
+        );
+
+        static::assertStringContainsString('src="./diagram.png"', $html);
+        static::assertStringContainsString('href="/aggregate-renderer/2.0/flow-charts.html"', $html);
+        static::assertSame(1, $this->links->count(LinkOutcome::NonDocument));
+        static::assertSame(1, $this->links->count(LinkOutcome::Documents));
+    }
 
     #[Test]
     public function keepsTheFragmentOfARewrittenLink(): void
@@ -89,6 +123,17 @@ final class LinkRewriterTest extends TestCase
     }
 
     #[Test]
+    public function leavesAnExternalAddressAlone(): void
+    {
+        static::assertSame(
+            'https://example.org/api.md',
+            $this->hrefOf('https://example.org/api.md', 'guide/setup.md'),
+        );
+        static::assertSame(1, $this->links->count(LinkOutcome::External));
+        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+    }
+
+    #[Test]
     public function leavesANonDocumentLinkAlone(): void
     {
         static::assertSame('images/diagram.png', $this->hrefOf('images/diagram.png', 'guide/setup.md'));
@@ -108,14 +153,19 @@ final class LinkRewriterTest extends TestCase
     }
 
     #[Test]
-    public function leavesAnExternalAddressAlone(): void
+    public function returnsAPageCarryingOnlyImagesUntouched(): void
     {
+        $html = '<p><img src="./diagram.png" alt="diagram"></p>';
+
         static::assertSame(
-            'https://example.org/api.md',
-            $this->hrefOf('https://example.org/api.md', 'guide/setup.md'),
+            $html,
+            $this->rewriter->rewrite(
+                html    : $html,
+                target  : Targets::target(),
+                fromPath: 'index.md',
+            ),
         );
-        static::assertSame(1, $this->links->count(LinkOutcome::External));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::NonDocument));
     }
 
     #[Test]
@@ -166,6 +216,16 @@ final class LinkRewriterTest extends TestCase
             '/aggregate-renderer/2.0/index.html',
             $this->hrefOf('../index.md', 'guide/setup.md'),
         );
+    }
+
+    #[Test]
+    public function rewritesALinkWrittenWithADotSegment(): void
+    {
+        static::assertSame(
+            '/aggregate-renderer/2.0/flow-charts.html',
+            $this->hrefOf('./flow-charts.md', 'index.md'),
+        );
+        static::assertSame(1, $this->links->count(LinkOutcome::Documents));
     }
 
     protected function setUp(): void

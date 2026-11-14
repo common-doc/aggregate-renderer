@@ -29,7 +29,6 @@ final class Config
     public static function site(
         string $outputDirectory = 'build',
         string $reportPath = 'build/report.json',
-        string $cacheDirectory = '.cache',
         array $templateMap = [],
         Strategy $strategy = Strategy::Ref,
         NavigationConfig $navigation = new NavigationConfig(),
@@ -39,7 +38,7 @@ final class Config
             tokenEnvVar    : 'COMMONDOC_TOKEN',
             outputDirectory: $outputDirectory,
             reportPath     : $reportPath,
-            cacheDirectory : $cacheDirectory,
+            cacheDirectory : '.cache',
             hostname       : 'docs.example.org',
             strategy       : $strategy,
             templateMap    : $templateMap,

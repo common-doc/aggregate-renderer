@@ -45,7 +45,10 @@ final class Targets
         return new Corpus(projects: [
             new ProjectCorpus(
                 project: $target->project,
-                targets: [new TargetCorpus(target: $target, documents: $documents)],
+                targets: [new TargetCorpus(
+                    target   : $target,
+                    documents: $documents,
+                )],
                 reasons: [],
             ),
         ]);
@@ -60,10 +63,13 @@ final class Targets
     {
         $table = RouteTable::create();
 
-        (new DocumentRouteProvider(
+        new DocumentRouteProvider(
             addresses: new PageAddressFactory(hostname: self::HOSTNAME),
-            corpus   : self::corpus(documents: $documents, target: $target),
-        ))->registerRoutes($table->collector);
+            corpus   : self::corpus(
+                documents: $documents,
+                target   : $target,
+            ),
+        )->registerRoutes($table->collector);
 
         return $table;
     }

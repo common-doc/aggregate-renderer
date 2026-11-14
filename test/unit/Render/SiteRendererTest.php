@@ -43,6 +43,7 @@ use function is_file;
 #[CoversClass(SiteRenderer::class)]
 #[CoversClass(SiteIndex::class)]
 #[CoversClass(NotFoundPage::class)]
+#[CoversClass(LinkTotals::class)]
 #[CoversMethod(SiteRenderer::class, '__construct')]
 #[CoversMethod(SiteRenderer::class, 'render')]
 #[CoversMethod(SiteRenderer::class, 'writeNotFoundPage')]
@@ -91,7 +92,10 @@ final class SiteRendererTest extends TestCase
         $pages = $this->renderer(documents: [
             'guide/setup.md' => "# Setup\n",
             'index.md'       => "# Home\n",
-        ])->render(new TargetCorpus(target: $this->target(), documents: ['guide/setup.md', 'index.md']));
+        ])->render(new TargetCorpus(
+            target: $this->target(),
+            documents: ['guide/setup.md', 'index.md'],
+        ));
 
         static::assertCount(2, $pages);
         static::assertSame(
@@ -105,7 +109,10 @@ final class SiteRendererTest extends TestCase
     public function rendersEveryDocumentOfATargetIntoItsVersionDirectory(): void
     {
         $pages = $this->renderer(documents: ['getting-started.md' => "# Getting started\n\nInstall it.\n"])
-            ->render(new TargetCorpus(target: $this->target(), documents: ['getting-started.md']));
+            ->render(new TargetCorpus(
+                target: $this->target(),
+                documents: ['getting-started.md'],
+            ));
 
         static::assertCount(1, $pages);
         static::assertSame(
@@ -125,7 +132,10 @@ final class SiteRendererTest extends TestCase
     public function reportsEveryDocumentAsFailedWhenOneCannotBeAddressed(): void
     {
         $pages = $this->renderer(documents: ['index.md' => "# Home\n"])
-            ->render(new TargetCorpus(target: $this->target(), documents: ['../escape.md', 'index.md']));
+            ->render(new TargetCorpus(
+                target: $this->target(),
+                documents: ['../escape.md', 'index.md'],
+            ));
 
         static::assertCount(2, $pages);
 

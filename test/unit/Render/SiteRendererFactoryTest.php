@@ -16,6 +16,7 @@ namespace CommonDocTest\Aggregate\Render;
 
 use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\TargetCorpus;
+use CommonDoc\Aggregate\Config\NavigationConfig;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 use Webware\Navigation\View\Helper\Navigation;
 
 #[CoversClass(SiteRendererFactory::class)]
+#[CoversClass(LinkTotals::class)]
 #[CoversMethod(SiteRendererFactory::class, 'create')]
 final class SiteRendererFactoryTest extends TestCase
 {
@@ -44,6 +46,23 @@ final class SiteRendererFactoryTest extends TestCase
 
         static::assertInstanceOf(SiteRendererFactoryInterface::class, $factory);
         static::assertInstanceOf(SiteRendererInterface::class, $this->create());
+    }
+
+    #[Test]
+    public function createsARendererWhenNavigationIsEnabled(): void
+    {
+        $renderer = $this->factory()->create(
+            config: Config::site(
+                outputDirectory: "{$this->directory->path}/build",
+                navigation     : new NavigationConfig(
+                    enabled   : true,
+                    identifier: 'manual',
+                ),
+            ),
+            source: $this->createStub(SourceInterface::class),
+        );
+
+        static::assertInstanceOf(SiteRendererInterface::class, $renderer);
     }
 
     #[Test]
@@ -78,17 +97,6 @@ final class SiteRendererFactoryTest extends TestCase
         $this->directory->remove();
     }
 
-    private function factory(): SiteRendererFactory
-    {
-        $routes = RouteTable::create();
-
-        return new SiteRendererFactory(
-            routes    : $routes,
-            navigation: new Navigation(routeCollector: $routes->collector),
-            links     : new LinkTotals(),
-        );
-    }
-
     /**
      * @param array<string, string> $documents
      */
@@ -104,6 +112,17 @@ final class SiteRendererFactoryTest extends TestCase
         return $this->factory()->create(
             config: Config::site(outputDirectory: "{$this->directory->path}/build"),
             source: $source,
+        );
+    }
+
+    private function factory(): SiteRendererFactory
+    {
+        $routes = RouteTable::create();
+
+        return new SiteRendererFactory(
+            routes    : $routes,
+            navigation: new Navigation(routeCollector: $routes->collector),
+            links     : new LinkTotals(),
         );
     }
 }

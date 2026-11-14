@@ -11,11 +11,14 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Build;
 
+use CommonDoc\Aggregate\Build\Corpus;
 use CommonDoc\Aggregate\Build\CorpusCollector;
+use CommonDoc\Aggregate\Build\CorpusRegistration;
 use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ProjectBuild;
+use CommonDoc\Aggregate\Build\ProjectCorpus;
 use CommonDoc\Aggregate\Build\ProjectOutcome;
 use CommonDoc\Aggregate\Build\ProjectStatus;
 use CommonDoc\Aggregate\Build\ReasonCode;
@@ -50,10 +53,24 @@ use function mkdir;
 #[CoversClass(SiteBuild::class)]
 #[CoversClass(ProjectBuild::class)]
 #[CoversClass(ProjectOutcome::class)]
+#[CoversClass(Corpus::class)]
+#[CoversClass(CorpusCollector::class)]
+#[CoversClass(CorpusRegistration::class)]
+#[CoversClass(DocumentRouteProviderFactory::class)]
+#[CoversClass(LinkTotals::class)]
+#[CoversClass(NavigationConfig::class)]
+#[CoversClass(ProjectCorpus::class)]
+#[CoversClass(TargetCorpus::class)]
 #[CoversMethod(SiteBuild::class, 'build')]
-#[CoversMethod(ProjectBuild::class, 'outcome')]
+#[CoversMethod(ProjectBuild::class, 'render')]
 #[CoversMethod(ProjectOutcome::class, 'for')]
 #[CoversMethod(ProjectOutcome::class, 'failed')]
+#[CoversMethod(CorpusCollector::class, 'collect')]
+#[CoversMethod(CorpusRegistration::class, 'resolve')]
+#[CoversMethod(DocumentRouteProviderFactory::class, 'create')]
+#[CoversMethod(LinkTotals::class, 'add')]
+#[CoversMethod(LinkTotals::class, 'count')]
+#[CoversMethod(NavigationConfig::class, '__construct')]
 final class SiteBuildTest extends TestCase
 {
     private TemporaryDirectory $directory;
@@ -352,20 +369,22 @@ final class SiteBuildTest extends TestCase
 
         return new SiteBuild(
             discovery   : $discovery,
-            corpus      : new CorpusCollector(
-                source    : $source,
-                strategies: new StrategyFactory(),
+            corpus      : new CorpusRegistration(
+                corpus   : new CorpusCollector(
+                    source    : $source,
+                    strategies: new StrategyFactory(),
+                ),
+                providers: new DocumentRouteProviderFactory(
+                    addresses : new PageAddressFactory(hostname: 'docs.example.com'),
+                    navigation: new NavigationConfig(),
+                ),
+                routes   : RouteTable::create(),
             ),
             renderer    : $renderer,
             projectBuild: new ProjectBuild(
                 renderer: $renderer,
                 links   : $links,
             ),
-            providers   : new DocumentRouteProviderFactory(
-                addresses : new PageAddressFactory(hostname: 'docs.example.com'),
-                navigation: new NavigationConfig(),
-            ),
-            routes      : RouteTable::create(),
             links       : $links,
         );
     }

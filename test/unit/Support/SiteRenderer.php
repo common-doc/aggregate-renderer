@@ -63,7 +63,11 @@ final class SiteRenderer implements SiteRendererInterface
                     'https://docs.example.com/%s/%s/%s.html',
                     $corpus->target->project->sitePath,
                     $corpus->target->version,
-                    substr($document, 0, -3),
+                    substr(
+                        string: $document,
+                        offset: 0,
+                        length: -3,
+                    ),
                 ),
                 status    : PageStatus::Rendered,
                 reasonCode: null,

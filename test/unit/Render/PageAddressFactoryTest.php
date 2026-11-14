@@ -24,6 +24,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function str_ends_with;
+
 #[CoversClass(PageAddressFactory::class)]
 #[CoversMethod(PageAddressFactory::class, '__construct')]
 #[CoversMethod(PageAddressFactory::class, 'forDocument')]
@@ -74,13 +76,13 @@ final class PageAddressFactoryTest extends TestCase
     public static function unmappableDocumentPaths(): array
     {
         return [
-            'empty'                 => [''],
-            'absolute'              => ['/docs/index.md'],
-            'no extension'          => ['index'],
-            'other format'          => ['index.rst'],
-            'escapes upward'        => ['guide/../../index.md'],
-            'backslashes'           => ['guide\\setup.md'],
-            'empty segment'         => ['guide//setup.md'],
+            'empty'                    => [''],
+            'absolute'                 => ['/docs/index.md'],
+            'no extension'             => ['index'],
+            'other format'             => ['index.rst'],
+            'escapes upward'           => ['guide/../../index.md'],
+            'backslashes'              => ['guide\\setup.md'],
+            'empty segment'            => ['guide//setup.md'],
             'directory without a file' => ['guide/'],
         ];
     }

@@ -15,10 +15,10 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Build\Container;
 
 use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
+use CommonDoc\Aggregate\Build\CorpusRegistrationFactoryInterface;
 use CommonDoc\Aggregate\Build\LinkTotals;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
-use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
 use CommonDoc\Aggregate\Source\SourceFactory;
 use CommonDoc\Aggregate\Source\SourceFactoryInterface;
@@ -31,6 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 
 #[CoversClass(SiteBuildFactoryFactory::class)]
+#[CoversClass(LinkTotals::class)]
 #[CoversMethod(SiteBuildFactoryFactory::class, '__invoke')]
 final class SiteBuildFactoryFactoryTest extends TestCase
 {
@@ -73,7 +74,10 @@ final class SiteBuildFactoryFactoryTest extends TestCase
             SiteRendererFactoryInterface::class,
             $this->createStub(SiteRendererFactoryInterface::class),
         );
-        $container->setService(RouteTable::class, RouteTable::create());
+        $container->setService(
+            CorpusRegistrationFactoryInterface::class,
+            $this->createStub(CorpusRegistrationFactoryInterface::class),
+        );
         $container->setService(LinkTotals::class, new LinkTotals());
 
         return $container;

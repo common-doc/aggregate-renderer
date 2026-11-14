@@ -82,15 +82,17 @@ final class PageAddressTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('servablePairs')]
-    public function namesTheAddressAsAPathBelowTheSiteRoot(string $file, string $address): void
+    public function explainsWhenTheAddressDoesNotNameABareHost(): void
     {
-        $page = new PageAddress(
-            file   : $file,
-            address: $address,
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage(
+            'The page address "https://docs.example.org/site/index.html" is not on https.',
         );
 
-        static::assertSame('/' . $file, $page->path());
+        new PageAddress(
+            file   : 'index.html',
+            address: 'https://docs.example.org/site/index.html',
+        );
     }
 
     #[Test]
@@ -113,7 +115,7 @@ final class PageAddressTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
             'The page address "https://docs.example.org/aggregate-renderer/2.0/index.html" '
-            . 'does not name the output file "aggregate-renderer/1.0/index.html".',
+                . 'does not name the output file "aggregate-renderer/1.0/index.html".',
         );
 
         new PageAddress(
@@ -151,20 +153,6 @@ final class PageAddressTest extends TestCase
     }
 
     #[Test]
-    public function explainsWhenTheAddressDoesNotNameABareHost(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage(
-            'The page address "https://docs.example.org/site/index.html" is not on https.',
-        );
-
-        new PageAddress(
-            file   : 'index.html',
-            address: 'https://docs.example.org/site/index.html',
-        );
-    }
-
-    #[Test]
     public function explainsWhichMemberIsNotRelative(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -176,6 +164,18 @@ final class PageAddressTest extends TestCase
             file   : '/1.0/index.html',
             address: 'https://docs.example.org/1.0/index.html',
         );
+    }
+
+    #[Test]
+    #[DataProvider('servablePairs')]
+    public function namesTheAddressAsAPathBelowTheSiteRoot(string $file, string $address): void
+    {
+        $page = new PageAddress(
+            file   : $file,
+            address: $address,
+        );
+
+        static::assertSame("/{$file}", $page->path());
     }
 
     #[Test]

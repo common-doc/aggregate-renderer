@@ -14,8 +14,9 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Navigation;
 
+use CommonDoc\Aggregate\Http\Middleware\NoOpMiddleware;
 use CommonDoc\Aggregate\Navigation\DocsSidebarRenderer;
-use CommonDoc\Aggregate\Navigation\NoOpMiddleware;
+use CommonDoc\Aggregate\Navigation\NavigationMarkup;
 use CommonDoc\Aggregate\Navigation\PageNavigation;
 use CommonDoc\Aggregate\Navigation\RouteTable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -28,9 +29,14 @@ use function preg_match_all;
 use function substr_count;
 
 #[CoversClass(PageNavigation::class)]
+#[CoversClass(DocsSidebarRenderer::class)]
+#[CoversClass(NavigationMarkup::class)]
+#[CoversClass(RouteTable::class)]
 #[CoversMethod(PageNavigation::class, 'activate')]
 #[CoversMethod(PageNavigation::class, 'deactivate')]
 #[CoversMethod(PageNavigation::class, 'markup')]
+#[CoversMethod(DocsSidebarRenderer::class, 'render')]
+#[CoversMethod(NavigationMarkup::class, '__invoke')]
 final class PageNavigationTest extends TestCase
 {
     #[Test]
@@ -77,7 +83,10 @@ final class PageNavigationTest extends TestCase
 
         $markup = $navigation->markup();
 
-        static::assertSame(1, substr_count($markup, 'aria-current="page"'));
+        static::assertSame(1, substr_count(
+            haystack: $markup,
+            needle  : 'aria-current="page"',
+        ));
         static::assertStringContainsString(
             '<a class="docs-nav-link active" href="/aggregate-renderer/2.0/guide/setup.html"'
                 . ' aria-current="page">Setup</a>',
@@ -114,7 +123,10 @@ final class PageNavigationTest extends TestCase
 
         $markup = $navigation->markup();
 
-        static::assertSame(2, substr_count($markup, 'docs-nav-children'));
+        static::assertSame(2, substr_count(
+            haystack: $markup,
+            needle  : 'docs-nav-children',
+        ));
         static::assertStringContainsString(
             'href="/aggregate-renderer/2.0/guide/index.html">Guide</a><ul class="docs-nav-children">',
             $markup,
@@ -180,6 +192,30 @@ final class PageNavigationTest extends TestCase
         static::assertSame('', $navigation->markup());
     }
 
+    #[Test]
+    public function theLayoutHelperReadsTheMarkupOfThePageBeingRendered(): void
+    {
+        $table = RouteTable::create();
+
+        $this->route($table, 'p|aggregate-renderer|2.0|index', '/aggregate-renderer/2.0/index.html', [
+            'label' => 'Overview',
+            'order' => 0,
+        ]);
+
+        $navigation = $this->navigation($table);
+        $navigation->activate('p|aggregate-renderer|2.0|index');
+
+        $helper = new NavigationMarkup($navigation);
+
+        static::assertSame($navigation->markup(), $helper());
+    }
+
+    #[Test]
+    public function theLayoutHelperRendersNothingWhenNavigationIsDisabled(): void
+    {
+        static::assertSame('', new NavigationMarkup()());
+    }
+
     /**
      * @return list<string>
      */
@@ -195,7 +231,7 @@ final class PageNavigationTest extends TestCase
         return new PageNavigation(
             helper: new Navigation(
                 routeCollector: $table->collector,
-                menuRenderer   : new DocsSidebarRenderer(),
+                menuRenderer  : new DocsSidebarRenderer(),
             ),
             navId : 'docs',
         );
@@ -206,9 +242,11 @@ final class PageNavigationTest extends TestCase
      */
     private function route(RouteTable $table, string $name, string $path, array $options): void
     {
-        $table->collector->get($path, new NoOpMiddleware(), $name)->setOptions([
-            'navigation' => ['docs'],
-            ...$options,
-        ]);
+        $table->collector
+            ->get($path, new NoOpMiddleware(), $name)
+            ->setOptions([
+                'navigation' => ['docs'],
+                ...$options,
+            ]);
     }
 }

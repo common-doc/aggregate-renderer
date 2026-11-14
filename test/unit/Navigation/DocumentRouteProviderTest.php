@@ -14,7 +14,12 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Navigation;
 
+use CommonDoc\Aggregate\Build\Corpus;
+use CommonDoc\Aggregate\Build\ProjectCorpus;
+use CommonDoc\Aggregate\Build\TargetCorpus;
+use CommonDoc\Aggregate\Config\NavigationConfig;
 use CommonDoc\Aggregate\Navigation\DocumentRouteProvider;
+use CommonDoc\Aggregate\Navigation\DocumentRouteProviderFactory;
 use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\PageAddressFactory;
 use CommonDocTest\Aggregate\Support\Targets;
@@ -29,16 +34,32 @@ use PHPUnit\Framework\TestCase;
 use function array_map;
 
 #[CoversClass(DocumentRouteProvider::class)]
+#[CoversClass(DocumentRouteProviderFactory::class)]
+#[CoversClass(Corpus::class)]
+#[CoversClass(ProjectCorpus::class)]
+#[CoversClass(TargetCorpus::class)]
 #[CoversMethod(DocumentRouteProvider::class, 'nameFor')]
 #[CoversMethod(DocumentRouteProvider::class, 'registerRoutes')]
+#[CoversMethod(DocumentRouteProviderFactory::class, 'create')]
 final class DocumentRouteProviderTest extends TestCase
 {
     #[Test]
+    public function aNameTheRouterNeverReceivedHasNoUri(): void
+    {
+        $table = Targets::routeTable(documents: ['index.md']);
+
+        $this->expectException(RouterRuntimeException::class);
+
+        $table->router->generateUri(DocumentRouteProvider::nameFor(Targets::target(), 'unpublished.md'));
+    }
+
+    #[Test]
     public function carriesTheNavigationMetadataTheSidebarReads(): void
     {
-        $options = $this->optionsOf(Targets::routeTable(documents: ['index.md', 'api-reference/index.md']))[
-            'p|aggregate-renderer|2.0|api-reference|index'
-        ];
+        $options = $this->optionsOf(Targets::routeTable(documents: [
+            'index.md',
+            'api-reference/index.md',
+        ]))['p|aggregate-renderer|2.0|api-reference|index'];
 
         static::assertSame(['docs'], $options['navigation']);
         static::assertSame('Api Reference', $options['label']);
@@ -107,24 +128,24 @@ final class DocumentRouteProviderTest extends TestCase
     }
 
     #[Test]
-    public function rejectsASecondDocumentThatPublishesToOneAddress(): void
+    public function registersNothingWhenNavigationIsDisabled(): void
     {
-        $table = Targets::routeTable(documents: ['index.md']);
+        $factory = new DocumentRouteProviderFactory(
+            addresses : new PageAddressFactory(hostname: Targets::HOSTNAME),
+            navigation: new NavigationConfig(),
+        );
 
-        $this->expectException(DuplicateRouteException::class);
-
-        (new DocumentRouteProvider(
-            addresses: new PageAddressFactory(hostname: Targets::HOSTNAME),
-            corpus   : Targets::corpus(documents: ['index.md']),
-        ))->registerRoutes($table->collector);
+        static::assertNull($factory->create(Targets::corpus(documents: ['index.md'])));
     }
 
     #[Test]
     public function registersOneRoutePerDocumentInSortedOrder(): void
     {
-        $routes = Targets::routeTable(documents: ['index.md', 'guide/setup.md', 'flow-charts.md'])
-            ->collector
-            ->getRoutes();
+        $routes = Targets::routeTable(documents: [
+            'index.md',
+            'guide/setup.md',
+            'flow-charts.md',
+        ])->collector->getRoutes();
 
         static::assertSame(
             [
@@ -145,13 +166,44 @@ final class DocumentRouteProviderTest extends TestCase
     }
 
     #[Test]
-    public function aNameTheRouterNeverReceivedHasNoUri(): void
+    public function registersTheCorpusWhenNavigationIsEnabled(): void
+    {
+        $table   = RouteTable::create();
+        $factory = new DocumentRouteProviderFactory(
+            addresses : new PageAddressFactory(hostname: Targets::HOSTNAME),
+            navigation: new NavigationConfig(
+                enabled   : true,
+                identifier: 'manual',
+            ),
+        );
+
+        $provider = $factory->create(Targets::corpus(documents: ['index.md']));
+
+        static::assertInstanceOf(DocumentRouteProvider::class, $provider);
+
+        $provider->registerRoutes($table->collector);
+
+        static::assertSame(
+            '/aggregate-renderer/2.0/index.html',
+            $table->router->generateUri('p|aggregate-renderer|2.0|index'),
+        );
+        static::assertSame(
+            ['manual'],
+            $this->optionsOf($table)['p|aggregate-renderer|2.0|index']['navigation'],
+        );
+    }
+
+    #[Test]
+    public function rejectsASecondDocumentThatPublishesToOneAddress(): void
     {
         $table = Targets::routeTable(documents: ['index.md']);
 
-        $this->expectException(RouterRuntimeException::class);
+        $this->expectException(DuplicateRouteException::class);
 
-        $table->router->generateUri(DocumentRouteProvider::nameFor(Targets::target(), 'unpublished.md'));
+        new DocumentRouteProvider(
+            addresses: new PageAddressFactory(hostname: Targets::HOSTNAME),
+            corpus   : Targets::corpus(documents: ['index.md']),
+        )->registerRoutes($table->collector);
     }
 
     /**
