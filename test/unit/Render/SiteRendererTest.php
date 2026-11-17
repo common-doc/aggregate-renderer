@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Render;
 
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Discovery\Project;
@@ -43,7 +43,7 @@ use function is_file;
 #[CoversClass(SiteRenderer::class)]
 #[CoversClass(SiteIndex::class)]
 #[CoversClass(NotFoundPage::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversMethod(SiteRenderer::class, '__construct')]
 #[CoversMethod(SiteRenderer::class, 'render')]
 #[CoversMethod(SiteRenderer::class, 'writeNotFoundPage')]
@@ -201,7 +201,7 @@ final class SiteRendererTest extends TestCase
         return new SiteRendererFactory(
             routes    : $routes,
             navigation: new Navigation(routeCollector: $routes->collector),
-            links     : new LinkTotals(),
+            links     : new LinkTotal(),
         )->create(
             config: Config::site(outputDirectory: "{$this->directory->path}/build"),
             source: $source,

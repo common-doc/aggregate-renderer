@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Render;
 
 use CommonDoc\Aggregate\Build\LinkOutcome;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\DocumentPath;
 use CommonDoc\Aggregate\Render\LinkHref;
@@ -33,19 +33,19 @@ use function sprintf;
 #[CoversClass(LinkRewriter::class)]
 #[CoversClass(DocumentPath::class)]
 #[CoversClass(LinkHref::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversClass(RouteTable::class)]
 #[CoversMethod(LinkRewriter::class, 'rewrite')]
 #[CoversMethod(DocumentPath::class, 'resolve')]
 #[CoversMethod(LinkHref::class, 'of')]
-#[CoversMethod(LinkTotals::class, 'add')]
-#[CoversMethod(LinkTotals::class, 'count')]
-#[CoversMethod(LinkTotals::class, 'toArray')]
+#[CoversMethod(LinkTotal::class, 'add')]
+#[CoversMethod(LinkTotal::class, 'count')]
+#[CoversMethod(LinkTotal::class, 'toArray')]
 final class LinkRewriterTest extends TestCase
 {
     private LinkRewriter $rewriter;
 
-    private LinkTotals $links;
+    private LinkTotal $links;
 
     #[Test]
     public function countsAnEmptyHrefAsANonDocumentLink(): void
@@ -230,7 +230,7 @@ final class LinkRewriterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->links = new LinkTotals();
+        $this->links = new LinkTotal();
 
         $this->rewriter = new LinkRewriter(
             router: Targets::routeTable(documents: [

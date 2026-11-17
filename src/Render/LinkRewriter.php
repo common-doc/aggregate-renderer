@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Render;
 
 use CommonDoc\Aggregate\Build\LinkOutcome;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Navigation\DocumentRouteProvider;
 use CommonDoc\Aggregate\Version\Target;
 use DOMDocument;
@@ -47,7 +47,7 @@ final readonly class LinkRewriter
 {
     public function __construct(
         private RouterInterface $router,
-        private LinkTotals $links,
+        private LinkTotal $links,
     ) {}
 
     /**

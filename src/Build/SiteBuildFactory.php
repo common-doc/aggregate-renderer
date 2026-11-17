@@ -44,7 +44,7 @@ final readonly class SiteBuildFactory implements SiteBuildFactoryInterface
         private SourceFactoryInterface $sources,
         private SiteRendererFactoryInterface $renderers,
         private CorpusRegistrationFactoryInterface $corpus,
-        private LinkTotals $links,
+        private LinkTotal $links,
     ) {}
 
     /**

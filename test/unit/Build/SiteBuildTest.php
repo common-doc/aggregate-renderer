@@ -14,7 +14,7 @@ namespace CommonDocTest\Aggregate\Build;
 use CommonDoc\Aggregate\Build\Corpus;
 use CommonDoc\Aggregate\Build\CorpusCollector;
 use CommonDoc\Aggregate\Build\CorpusRegistration;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ProjectBuild;
@@ -57,7 +57,7 @@ use function mkdir;
 #[CoversClass(CorpusCollector::class)]
 #[CoversClass(CorpusRegistration::class)]
 #[CoversClass(DocumentRouteProviderFactory::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversClass(NavigationConfig::class)]
 #[CoversClass(ProjectCorpus::class)]
 #[CoversClass(TargetCorpus::class)]
@@ -68,8 +68,8 @@ use function mkdir;
 #[CoversMethod(CorpusCollector::class, 'collect')]
 #[CoversMethod(CorpusRegistration::class, 'resolve')]
 #[CoversMethod(DocumentRouteProviderFactory::class, 'create')]
-#[CoversMethod(LinkTotals::class, 'add')]
-#[CoversMethod(LinkTotals::class, 'count')]
+#[CoversMethod(LinkTotal::class, 'add')]
+#[CoversMethod(LinkTotal::class, 'count')]
 #[CoversMethod(NavigationConfig::class, '__construct')]
 final class SiteBuildTest extends TestCase
 {
@@ -142,7 +142,7 @@ final class SiteBuildTest extends TestCase
 
         static::assertSame(1, $report->exitCode);
         static::assertSame(ProjectStatus::Failed, $report->projects[0]->status);
-        static::assertSame([ReasonCode::NoVersions], $report->projects[0]->reasonCodes);
+        static::assertSame([ReasonCode::NoVersion], $report->projects[0]->reasonCodes);
         static::assertSame([], $renderer->rendered);
         static::assertSame(1, $renderer->notFoundPages);
     }
@@ -365,7 +365,7 @@ final class SiteBuildTest extends TestCase
         $discovery->method('all')->willReturn(array_map(self::project(...), $projects));
 
         $source = $this->source($candidates, $unavailable, $missing);
-        $links  = new LinkTotals();
+        $links  = new LinkTotal();
 
         return new SiteBuild(
             discovery   : $discovery,

@@ -33,7 +33,7 @@ use function substr_count;
  * so every version is read from the default branch under its own directory, which is the whole of
  * the difference between the two strategies.
  */
-final class GitReferences
+final class GitReferenceContainer
 {
     private const string REMOTE = 'refs/remotes/origin/';
 

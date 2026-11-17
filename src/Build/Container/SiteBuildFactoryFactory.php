@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDoc\Aggregate\Build\Container;
 
 use CommonDoc\Aggregate\Build\CorpusRegistrationFactoryInterface;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
@@ -54,7 +54,7 @@ final readonly class SiteBuildFactoryFactory implements FactoryInterface
             sources  : $container->get(SourceFactoryInterface::class),
             corpus   : $container->get(CorpusRegistrationFactoryInterface::class),
             renderers: $container->get(SiteRendererFactoryInterface::class),
-            links    : $container->get(LinkTotals::class),
+            links    : $container->get(LinkTotal::class),
         );
     }
 }

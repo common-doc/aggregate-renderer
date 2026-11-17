@@ -34,15 +34,15 @@ final readonly class SourceFactory implements SourceFactoryInterface
             runner        : new GitCommand(),
             cacheDirectory: $config->cacheDirectory,
         );
-        $references = new GitReferences(checkouts: $checkouts);
+        $references = new GitReferenceContainer(checkouts: $checkouts);
 
         return new GitSource(
-            candidates: new GitCandidates(
+            candidates: new GitCandidateContainer(
                 checkouts : $checkouts,
                 references: $references,
                 strategy  : $config->strategy,
             ),
-            documents : new GitDocuments(
+            documents : new GitDocumentContainer(
                 checkouts : $checkouts,
                 references: $references,
                 strategy  : $config->strategy,

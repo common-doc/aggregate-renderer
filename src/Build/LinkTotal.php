@@ -25,7 +25,7 @@ namespace CommonDoc\Aggregate\Build;
  * A build creates one of these and every page adds to it, so the counts describe the run rather than
  * the last page rendered.
  */
-final class LinkTotals
+final class LinkTotal
 {
     /** @var array<string, non-negative-int> */
     private array $counts = [];

@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Render\Container;
 
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
 use Laminas\ServiceManager\Factory\FactoryInterface;
@@ -49,7 +49,7 @@ final readonly class SiteRendererFactoryFactory implements FactoryInterface
         return new SiteRendererFactory(
             routes    : $container->get(RouteTable::class),
             navigation: $container->get(Navigation::class),
-            links     : $container->get(LinkTotals::class),
+            links     : $container->get(LinkTotal::class),
         );
     }
 }

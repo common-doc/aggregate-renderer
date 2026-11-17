@@ -30,11 +30,11 @@ enum ReasonCode: string
     case DuplicateSlug        = 'duplicate-slug';
     case DuplicateVersion     = 'duplicate-version';
     case DuplicatePageAddress = 'duplicate-page-address';
-    case NoVersions           = 'no-versions';
+    case NoVersion            = 'no-versions';
     case MissingDocDirectory  = 'missing-doc-directory';
     case SourceUnavailable    = 'source-unavailable';
     case RenderFailed         = 'render-failed';
-    case UnresolvedLinks      = 'unresolved-links';
+    case UnresolvedLink       = 'unresolved-links';
     case WriteFailed          = 'write-failed';
     case MissingCname         = 'missing-cname';
 }

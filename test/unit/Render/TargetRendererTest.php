@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Render;
 
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Build\TargetCorpus;
@@ -52,13 +52,13 @@ use function is_file;
 #[CoversClass(TargetRenderer::class)]
 #[CoversClass(UnaddressableDocumentException::class)]
 #[CoversClass(DocumentReader::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversClass(PagePresenter::class)]
 #[CoversMethod(TargetRenderer::class, '__construct')]
 #[CoversMethod(TargetRenderer::class, 'render')]
 #[CoversMethod(UnaddressableDocumentException::class, 'at')]
 #[CoversMethod(DocumentReader::class, 'read')]
-#[CoversMethod(LinkTotals::class, 'add')]
+#[CoversMethod(LinkTotal::class, 'add')]
 #[CoversMethod(PagePresenter::class, '__construct')]
 #[CoversMethod(PagePresenter::class, 'html')]
 final class TargetRendererTest extends TestCase
@@ -363,7 +363,7 @@ final class TargetRendererTest extends TestCase
     {
         return new LinkRewriter(
             router: Targets::routeTable(documents: $documents)->router,
-            links : new LinkTotals(),
+            links : new LinkTotal(),
         );
     }
 

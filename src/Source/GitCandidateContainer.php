@@ -28,11 +28,11 @@ use function sprintf;
  * default branch for the immediate subdirectories of the documentation directory, because in a tree
  * corpus the directory name is the version.
  */
-final class GitCandidates
+final class GitCandidateContainer
 {
     public function __construct(
         private readonly GitCheckout $checkouts,
-        private readonly GitReferences $references,
+        private readonly GitReferenceContainer $references,
         private readonly Strategy $strategy,
     ) {}
 

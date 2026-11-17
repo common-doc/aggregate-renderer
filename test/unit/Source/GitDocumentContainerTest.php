@@ -16,10 +16,11 @@ namespace CommonDocTest\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Exception\MissingDocDirectoryException;
-use CommonDoc\Aggregate\Source\GitCandidates;
 use CommonDoc\Aggregate\Source\GitCheckout;
-use CommonDoc\Aggregate\Source\GitReferences;
+use CommonDoc\Aggregate\Source\GitDocumentContainer;
+use CommonDoc\Aggregate\Source\GitReferenceContainer;
 use CommonDoc\Aggregate\Version\Strategy;
+use CommonDoc\Aggregate\Version\Target;
 use CommonDocTest\Aggregate\Support\GitRunner;
 use CommonDocTest\Aggregate\Support\TemporaryDirectory;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -27,62 +28,74 @@ use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-use function count;
 use function implode;
 use function mkdir;
 use function sprintf;
 
-#[CoversClass(GitCandidates::class)]
-#[CoversMethod(GitCandidates::class, 'names')]
-final class GitCandidatesTest extends TestCase
+#[CoversClass(GitDocumentContainer::class)]
+#[CoversMethod(GitDocumentContainer::class, 'contents')]
+#[CoversMethod(GitDocumentContainer::class, 'paths')]
+final class GitDocumentContainerTest extends TestCase
 {
     private TemporaryDirectory $temporary;
 
     #[Test]
-    public function listsTheBranchesAndTagsOfTheRemoteForAReferenceCorpus(): void
-    {
-        $runner = $this->runner()->returning(implode("\n", [
-            "0123456789abcdef\trefs/heads/1.0.x",
-            "fedcba9876543210\trefs/tags/v1.0.0",
-            '',
-        ]));
-
-        static::assertSame(
-            ['1.0.x', 'v1.0.0'],
-            $this->candidates($runner, Strategy::Ref)->names($this->project()),
-        );
-
-        static::assertSame('ls-remote', $runner->calls[2]['arguments'][0]);
-        static::assertSame('--refs', $runner->calls[2]['arguments'][3]);
-    }
-
-    #[Test]
-    public function listsTheSubdirectoriesOfTheDocumentationDirectoryForATreeCorpus(): void
+    public function listsTheDocumentsOfATreeCorpusUnderTheVersionDirectory(): void
     {
         $runner = $this
             ->runner()
             ->returning("ref: refs/heads/main\tHEAD\n")
-            ->returning(implode("\n", ['docs/1.0', 'docs/1.1', '']));
+            ->returning(implode("\n", ['docs/1.0/index.md', 'docs/1.0/guide.md', 'docs/1.1/index.md', '']));
 
         static::assertSame(
-            ['1.0', '1.1'],
-            $this->candidates($runner, Strategy::Tree)->names($this->project()),
-        );
-
-        static::assertSame(
-            ['ls-tree', '-d', '--name-only', 'refs/remotes/origin/main', '--', 'docs/'],
-            $runner->calls[count($runner->calls) - 1]['arguments'],
+            ['index.md', 'guide.md'],
+            $this->documents($runner, Strategy::Tree)->paths($this->target('1.0')),
         );
     }
 
     #[Test]
-    public function reportsATreeCorpusWithoutADocumentationDirectory(): void
+    public function listsTheMarkdownDocumentsOfAReferenceCorpus(): void
     {
-        $runner = $this->runner()->returning("ref: refs/heads/main\tHEAD\n")->returning('');
+        $runner = $this->runner()->returning(implode("\n", [
+            'docs/guide/index.md',
+            'docs/install.md',
+            'docs/logo.svg',
+            '',
+        ]));
 
+        static::assertSame(
+            ['guide/index.md', 'install.md'],
+            $this->documents($runner, Strategy::Ref)->paths($this->target('1.0')),
+        );
+
+        static::assertSame(
+            ['ls-tree', '-r', '--name-only', 'refs/remotes/origin/1.0.x', '--', 'docs/'],
+            $runner->calls[2]['arguments'],
+        );
+    }
+
+    #[Test]
+    public function readsOneDocumentAtTheReferenceRatherThanTheBranchTip(): void
+    {
+        $runner = $this->runner()->returning("# Aggregate renderer\n");
+
+        static::assertSame(
+            "# Aggregate renderer\n",
+            $this->documents($runner, Strategy::Ref)->contents($this->target('1.0'), documentPath: 'index.md'),
+        );
+
+        static::assertSame(
+            ['show', 'refs/remotes/origin/1.0.x:docs/index.md'],
+            $runner->calls[2]['arguments'],
+        );
+    }
+
+    #[Test]
+    public function reportsATargetWithoutDocuments(): void
+    {
         $this->expectException(MissingDocDirectoryException::class);
 
-        $this->candidates($runner, Strategy::Tree)->names($this->project());
+        $this->documents($this->runner()->returning(''), Strategy::Ref)->paths($this->target('1.0'));
     }
 
     protected function setUp(): void
@@ -95,7 +108,7 @@ final class GitCandidatesTest extends TestCase
         $this->temporary->remove();
     }
 
-    private function candidates(GitRunner $runner, Strategy $strategy): GitCandidates
+    private function documents(GitRunner $runner, Strategy $strategy): GitDocumentContainer
     {
         $site = sprintf('%s/sources/aggregate-renderer', $this->temporary->path);
 
@@ -110,9 +123,9 @@ final class GitCandidatesTest extends TestCase
             cacheDirectory: $this->temporary->path,
         );
 
-        return new GitCandidates(
+        return new GitDocumentContainer(
             checkouts : $checkout,
-            references: new GitReferences($checkout),
+            references: new GitReferenceContainer($checkout),
             strategy  : $strategy,
         );
     }
@@ -132,5 +145,13 @@ final class GitCandidatesTest extends TestCase
         return new GitRunner()
             ->returning('')
             ->returning('');
+    }
+
+    private function target(string $version): Target
+    {
+        return new Target(
+            project: $this->project(),
+            version: $version,
+        );
     }
 }

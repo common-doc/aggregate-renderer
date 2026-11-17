@@ -60,7 +60,7 @@ final readonly class CorpusCollector
         }
 
         if ([] === $targets) {
-            return new ProjectCorpus($project, [], [ReasonCode::NoVersions]);
+            return new ProjectCorpus($project, [], [ReasonCode::NoVersion]);
         }
 
         $corpora = [];

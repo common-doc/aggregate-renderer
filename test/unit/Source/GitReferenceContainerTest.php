@@ -18,7 +18,7 @@ use CommonDoc\Aggregate\Build\ReasonCode;
 use CommonDoc\Aggregate\Discovery\Project;
 use CommonDoc\Aggregate\Exception\SourceUnavailableException;
 use CommonDoc\Aggregate\Source\GitCheckout;
-use CommonDoc\Aggregate\Source\GitReferences;
+use CommonDoc\Aggregate\Source\GitReferenceContainer;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\Target;
 use CommonDocTest\Aggregate\Support\GitRunner;
@@ -32,11 +32,11 @@ use function implode;
 use function mkdir;
 use function sprintf;
 
-#[CoversClass(GitReferences::class)]
-#[CoversMethod(GitReferences::class, 'defaultRef')]
-#[CoversMethod(GitReferences::class, 'refFor')]
-#[CoversMethod(GitReferences::class, 'rootFor')]
-final class GitReferencesTest extends TestCase
+#[CoversClass(GitReferenceContainer::class)]
+#[CoversMethod(GitReferenceContainer::class, 'defaultRef')]
+#[CoversMethod(GitReferenceContainer::class, 'refFor')]
+#[CoversMethod(GitReferenceContainer::class, 'rootFor')]
+final class GitReferenceContainerTest extends TestCase
 {
     private TemporaryDirectory $temporary;
 
@@ -166,7 +166,7 @@ final class GitReferencesTest extends TestCase
         );
     }
 
-    private function references(GitRunner $runner): GitReferences
+    private function references(GitRunner $runner): GitReferenceContainer
     {
         $site = sprintf('%s/sources/aggregate-renderer', $this->temporary->path);
 
@@ -176,7 +176,7 @@ final class GitReferencesTest extends TestCase
             recursive  : true,
         ));
 
-        return new GitReferences(new GitCheckout(
+        return new GitReferenceContainer(new GitCheckout(
             runner        : $runner,
             cacheDirectory: $this->temporary->path,
         ));

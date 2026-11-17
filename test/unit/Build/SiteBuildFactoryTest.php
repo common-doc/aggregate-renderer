@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Build;
 
 use CommonDoc\Aggregate\Build\CorpusRegistrationFactoryInterface;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\SiteBuild;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
@@ -32,7 +32,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(SiteBuildFactory::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversMethod(SiteBuildFactory::class, '__construct')]
 #[CoversMethod(SiteBuildFactory::class, 'create')]
 final class SiteBuildFactoryTest extends TestCase
@@ -85,7 +85,7 @@ final class SiteBuildFactoryTest extends TestCase
             sources  : $sources ?? $this->createStub(SourceFactoryInterface::class),
             renderers: $renderers ?? $this->createStub(SiteRendererFactoryInterface::class),
             corpus   : $this->createStub(CorpusRegistrationFactoryInterface::class),
-            links    : new LinkTotals(),
+            links    : new LinkTotal(),
         );
     }
 }

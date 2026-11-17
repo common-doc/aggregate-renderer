@@ -30,8 +30,8 @@ use Override;
 final readonly class GitSource implements SourceInterface
 {
     public function __construct(
-        private GitCandidates $candidates,
-        private GitDocuments $documents,
+        private GitCandidateContainer $candidates,
+        private GitDocumentContainer $documents,
     ) {}
 
     /**

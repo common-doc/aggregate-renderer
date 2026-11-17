@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Build;
 
 use CommonDoc\Aggregate\Build\LinkOutcome;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,23 +23,23 @@ use PHPUnit\Framework\TestCase;
 
 use function count;
 
-#[CoversClass(LinkTotals::class)]
-#[CoversMethod(LinkTotals::class, 'add')]
-#[CoversMethod(LinkTotals::class, 'count')]
-#[CoversMethod(LinkTotals::class, 'reset')]
-#[CoversMethod(LinkTotals::class, 'toArray')]
-final class LinkTotalsTest extends TestCase
+#[CoversClass(LinkTotal::class)]
+#[CoversMethod(LinkTotal::class, 'add')]
+#[CoversMethod(LinkTotal::class, 'count')]
+#[CoversMethod(LinkTotal::class, 'reset')]
+#[CoversMethod(LinkTotal::class, 'toArray')]
+final class LinkTotalTest extends TestCase
 {
     #[Test]
     public function countsAnOutcomeThatWasNeverAddedAsZero(): void
     {
-        static::assertSame(0, new LinkTotals()->count(LinkOutcome::External));
+        static::assertSame(0, new LinkTotal()->count(LinkOutcome::External));
     }
 
     #[Test]
     public function countsEachOutcomeSeparately(): void
     {
-        $totals = new LinkTotals();
+        $totals = new LinkTotal();
 
         $totals->add(LinkOutcome::Document);
         $totals->add(LinkOutcome::Document);
@@ -52,7 +52,7 @@ final class LinkTotalsTest extends TestCase
     #[Test]
     public function resetReturnsEveryCountToZero(): void
     {
-        $totals = new LinkTotals();
+        $totals = new LinkTotal();
         $totals->add(LinkOutcome::Document);
 
         $totals->reset();
@@ -67,7 +67,7 @@ final class LinkTotalsTest extends TestCase
     #[Test]
     public function serialisesEveryOutcomeInDeclarationOrder(): void
     {
-        $totals = new LinkTotals();
+        $totals = new LinkTotal();
         $totals->add(LinkOutcome::Document);
         $totals->add(LinkOutcome::NonDocument);
 

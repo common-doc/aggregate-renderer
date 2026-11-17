@@ -27,11 +27,11 @@ use function sprintf;
  * Both reads name a ref rather than a branch tip, so a build that runs while the repository moves
  * reads one commit consistently rather than a mixture of two.
  */
-final class GitDocuments
+final class GitDocumentContainer
 {
     public function __construct(
         private readonly GitCheckout $checkouts,
-        private readonly GitReferences $references,
+        private readonly GitReferenceContainer $references,
         private readonly Strategy $strategy,
     ) {}
 

@@ -15,10 +15,10 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Source;
 
 use CommonDoc\Aggregate\Discovery\Project;
-use CommonDoc\Aggregate\Source\GitCandidates;
+use CommonDoc\Aggregate\Source\GitCandidateContainer;
 use CommonDoc\Aggregate\Source\GitCheckout;
-use CommonDoc\Aggregate\Source\GitDocuments;
-use CommonDoc\Aggregate\Source\GitReferences;
+use CommonDoc\Aggregate\Source\GitDocumentContainer;
+use CommonDoc\Aggregate\Source\GitReferenceContainer;
 use CommonDoc\Aggregate\Source\GitSource;
 use CommonDoc\Aggregate\Version\Strategy;
 use CommonDoc\Aggregate\Version\Target;
@@ -92,15 +92,15 @@ final class GitSourceTest extends TestCase
             runner        : $runner,
             cacheDirectory: $this->temporary->path,
         );
-        $references = new GitReferences($checkout);
+        $references = new GitReferenceContainer($checkout);
 
         return new GitSource(
-            candidates: new GitCandidates(
+            candidates: new GitCandidateContainer(
                 checkouts : $checkout,
                 references: $references,
                 strategy  : Strategy::Ref,
             ),
-            documents : new GitDocuments(
+            documents : new GitDocumentContainer(
                 checkouts : $checkout,
                 references: $references,
                 strategy  : Strategy::Ref,

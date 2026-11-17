@@ -46,7 +46,7 @@ final readonly class SiteBuild
         private CorpusRegistrationInterface $corpus,
         private SiteRendererInterface $renderer,
         private ProjectBuild $projectBuild,
-        private LinkTotals $links,
+        private LinkTotal $links,
     ) {}
 
     /**

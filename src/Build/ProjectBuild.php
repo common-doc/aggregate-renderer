@@ -27,7 +27,7 @@ final readonly class ProjectBuild
 {
     public function __construct(
         private SiteRendererInterface $renderer,
-        private LinkTotals $links,
+        private LinkTotal $links,
     ) {}
 
     /**
@@ -48,7 +48,7 @@ final readonly class ProjectBuild
         $reasons = $corpus->reasons;
 
         if ($this->links->count(LinkOutcome::Unresolved) > $unresolved) {
-            $reasons[] = ReasonCode::UnresolvedLinks;
+            $reasons[] = ReasonCode::UnresolvedLink;
         }
 
         return ProjectOutcome::for($corpus->project, $rendered, $pages, $reasons);

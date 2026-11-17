@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDoc\Aggregate\Render;
 
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Config\SiteConfig;
 use CommonDoc\Aggregate\Navigation\PageNavigation;
 use CommonDoc\Aggregate\Navigation\RouteTable;
@@ -46,7 +46,7 @@ final readonly class SiteRendererFactory implements SiteRendererFactoryInterface
     public function __construct(
         private RouteTable $routes,
         private Navigation $navigation,
-        private LinkTotals $links,
+        private LinkTotal $links,
     ) {}
 
     /**

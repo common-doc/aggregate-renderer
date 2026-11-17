@@ -15,7 +15,7 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate\Build;
 
 use CommonDoc\Aggregate\Build\LinkOutcome;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ProjectBuild;
@@ -29,16 +29,16 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ProjectBuild::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversMethod(ProjectBuild::class, 'render')]
-#[CoversMethod(LinkTotals::class, 'add')]
-#[CoversMethod(LinkTotals::class, 'count')]
+#[CoversMethod(LinkTotal::class, 'add')]
+#[CoversMethod(LinkTotal::class, 'count')]
 final class ProjectBuildTest extends TestCase
 {
     #[Test]
     public function leavesTheProjectCleanWhenNoLinkMissed(): void
     {
-        $links = new LinkTotals();
+        $links = new LinkTotal();
 
         $outcome = new ProjectBuild(
             renderer: new SiteRenderer(),
@@ -51,7 +51,7 @@ final class ProjectBuildTest extends TestCase
     #[Test]
     public function reportsTheProjectWhosePageCarriedAnUnpublishedLink(): void
     {
-        $links = new LinkTotals();
+        $links = new LinkTotal();
 
         $outcome = new ProjectBuild(
             renderer: new SiteRenderer(static function (TargetCorpus $corpus) use ($links): array {
@@ -67,6 +67,6 @@ final class ProjectBuildTest extends TestCase
             links   : $links,
         )->render(Targets::corpus(documents: ['index.md'])->projects[0]);
 
-        static::assertSame([ReasonCode::UnresolvedLinks], $outcome->result->reasonCodes);
+        static::assertSame([ReasonCode::UnresolvedLink], $outcome->result->reasonCodes);
     }
 }

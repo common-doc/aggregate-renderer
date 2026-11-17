@@ -18,7 +18,7 @@ use CommonDoc\Aggregate\Build\Container\CorpusRegistrationFactoryFactory;
 use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
 use CommonDoc\Aggregate\Build\CorpusRegistrationFactory;
 use CommonDoc\Aggregate\Build\CorpusRegistrationFactoryInterface;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Build\SiteBuildFactoryInterface;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
@@ -127,7 +127,7 @@ final class ConfigProviderTest extends TestCase
                     CorpusRegistrationFactory::class  => CorpusRegistrationFactoryFactory::class,
                     DocsSidebarRenderer::class        => InvokableFactory::class,
                     GitHubProjectSourceFactory::class => GitHubProjectSourceFactoryFactory::class,
-                    LinkTotals::class                 => InvokableFactory::class,
+                    LinkTotal::class                  => InvokableFactory::class,
                     Navigation::class                 => NavigationHelperFactory::class,
                     ReportFileFactory::class          => InvokableFactory::class,
                     RouteTable::class                 => RouteTableFactory::class,

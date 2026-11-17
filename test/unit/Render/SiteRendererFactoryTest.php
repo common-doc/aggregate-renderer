@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Render;
 
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\TargetCorpus;
 use CommonDoc\Aggregate\Config\NavigationConfig;
 use CommonDoc\Aggregate\Discovery\Project;
@@ -33,7 +33,7 @@ use PHPUnit\Framework\TestCase;
 use Webware\Navigation\View\Helper\Navigation;
 
 #[CoversClass(SiteRendererFactory::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversMethod(SiteRendererFactory::class, 'create')]
 final class SiteRendererFactoryTest extends TestCase
 {
@@ -122,7 +122,7 @@ final class SiteRendererFactoryTest extends TestCase
         return new SiteRendererFactory(
             routes    : $routes,
             navigation: new Navigation(routeCollector: $routes->collector),
-            links     : new LinkTotals(),
+            links     : new LinkTotal(),
         );
     }
 }

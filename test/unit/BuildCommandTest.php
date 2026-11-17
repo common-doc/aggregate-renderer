@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace CommonDocTest\Aggregate;
 
 use CommonDoc\Aggregate\Build\CorpusRegistrationFactory;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Config\SiteConfigReader;
 use CommonDoc\Aggregate\Console\BuildCommand;
@@ -52,12 +52,12 @@ use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(BuildCommand::class)]
 #[CoversClass(CorpusRegistrationFactory::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversClass(RouteTable::class)]
 #[CoversMethod(BuildCommand::class, 'configure')]
 #[CoversMethod(BuildCommand::class, 'execute')]
 #[CoversMethod(CorpusRegistrationFactory::class, 'create')]
-#[CoversMethod(LinkTotals::class, 'add')]
+#[CoversMethod(LinkTotal::class, 'add')]
 final class BuildCommandTest extends TestCase
 {
     private const array SEPARATE_STREAMS = ['capture_stderr_separately' => true];
@@ -224,7 +224,7 @@ final class BuildCommandTest extends TestCase
                     strategies: new StrategyFactory(),
                     routes    : RouteTable::create(),
                 ),
-                links    : new LinkTotals(),
+                links    : new LinkTotal(),
             ),
             new ReportFileFactory(),
         );

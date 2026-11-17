@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Render\Container;
 
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Navigation\RouteTable;
 use CommonDoc\Aggregate\Render\Container\SiteRendererFactoryFactory;
 use CommonDoc\Aggregate\Render\SiteRendererFactory;
@@ -36,7 +36,7 @@ final class SiteRendererFactoryFactoryTest extends TestCase
         $table     = RouteTable::create();
         $container->setService(RouteTable::class, $table);
         $container->setService(Navigation::class, new Navigation($table->collector));
-        $container->setService(LinkTotals::class, new LinkTotals());
+        $container->setService(LinkTotal::class, new LinkTotal());
 
         static::assertInstanceOf(
             SiteRendererFactory::class,

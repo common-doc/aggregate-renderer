@@ -16,7 +16,7 @@ namespace CommonDocTest\Aggregate\Build\Container;
 
 use CommonDoc\Aggregate\Build\Container\SiteBuildFactoryFactory;
 use CommonDoc\Aggregate\Build\CorpusRegistrationFactoryInterface;
-use CommonDoc\Aggregate\Build\LinkTotals;
+use CommonDoc\Aggregate\Build\LinkTotal;
 use CommonDoc\Aggregate\Build\SiteBuildFactory;
 use CommonDoc\Aggregate\Discovery\ProjectSourceFactoryInterface;
 use CommonDoc\Aggregate\Render\SiteRendererFactoryInterface;
@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerExceptionInterface;
 
 #[CoversClass(SiteBuildFactoryFactory::class)]
-#[CoversClass(LinkTotals::class)]
+#[CoversClass(LinkTotal::class)]
 #[CoversMethod(SiteBuildFactoryFactory::class, '__invoke')]
 final class SiteBuildFactoryFactoryTest extends TestCase
 {
@@ -78,7 +78,7 @@ final class SiteBuildFactoryFactoryTest extends TestCase
             CorpusRegistrationFactoryInterface::class,
             $this->createStub(CorpusRegistrationFactoryInterface::class),
         );
-        $container->setService(LinkTotals::class, new LinkTotals());
+        $container->setService(LinkTotal::class, new LinkTotal());
 
         return $container;
     }
