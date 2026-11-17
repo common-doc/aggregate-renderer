@@ -85,7 +85,7 @@ final class TargetRendererTest extends TestCase
             documents: ['getting_started.md' => "# Start\n"],
             templates: $templates,
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['getting_started.md'],
         ));
 
@@ -114,7 +114,7 @@ final class TargetRendererTest extends TestCase
             templates: $templates,
             pages    : $context,
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['index.md'],
         ));
 
@@ -130,7 +130,7 @@ final class TargetRendererTest extends TestCase
             documents: ['index.md' => "# Home\n"],
             pages    : $context,
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['index.md'],
         ));
 
@@ -142,7 +142,7 @@ final class TargetRendererTest extends TestCase
     {
         $pages = $this->renderer(documents: ['index.md' => "# Home\n", '../escape.md' => "# Escape\n"])
             ->render(corpus: new TargetCorpus(
-                target: $this->target(),
+                target   : $this->target(),
                 documents: ['index.md', '../escape.md'],
             ));
 
@@ -162,7 +162,7 @@ final class TargetRendererTest extends TestCase
     {
         $pages = $this->renderer(documents: ['guide/beta.md' => "# Beta\n", 'guide/alpha.md' => "# Alpha\n"])
             ->render(corpus: new TargetCorpus(
-                target: $this->target(),
+                target   : $this->target(),
                 documents: ['guide/beta.md', 'guide/alpha.md'],
             ));
 
@@ -187,7 +187,7 @@ final class TargetRendererTest extends TestCase
             documents: ['index.md' => "# Home\n"],
             templates: $templates,
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['index.md'],
         ));
 
@@ -206,7 +206,7 @@ final class TargetRendererTest extends TestCase
             documents: ['index.md' => "# Home\n"],
             templates: $templates,
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['index.md'],
         ));
 
@@ -226,7 +226,7 @@ final class TargetRendererTest extends TestCase
             templates: $templates,
         )
             ->render(corpus: new TargetCorpus(
-                target: $this->target(),
+                target   : $this->target(),
                 documents: ['index.md'],
             ));
 
@@ -241,7 +241,7 @@ final class TargetRendererTest extends TestCase
         static::assertSame(
             [],
             $this->renderer()->render(corpus: new TargetCorpus(
-                target: $this->target(),
+                target   : $this->target(),
                 documents: [],
             )),
         );
@@ -254,7 +254,7 @@ final class TargetRendererTest extends TestCase
             documents: ['guide/setup.md' => "See [home](../index.md).\n"],
             links    : $this->links(documents: ['index.md', 'guide/setup.md']),
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['guide/setup.md'],
         ));
 
@@ -276,7 +276,7 @@ final class TargetRendererTest extends TestCase
             templates: $templates,
             links    : $this->links(documents: ['index.md']),
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['index.md'],
         ));
 
@@ -288,7 +288,7 @@ final class TargetRendererTest extends TestCase
     #[Test]
     public function theExceptionNamesTheVersionAndTheDocumentThatCouldNotBeAddressed(): void
     {
-        $exception = UnaddressableDocumentException::at($this->target(), '../escape.md');
+        $exception = UnaddressableDocumentException::at($this->target(), documentPath: '../escape.md');
 
         static::assertSame(ReasonCode::RenderFailed, $exception->reasonCode);
         static::assertStringContainsString('2.0', $exception->getMessage());
@@ -302,7 +302,7 @@ final class TargetRendererTest extends TestCase
             documents: ['guide/setup.md' => "See [elsewhere](missing.md).\n"],
             links    : $this->links(documents: ['guide/setup.md']),
         )->render(corpus: new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['guide/setup.md'],
         ));
 
@@ -318,7 +318,7 @@ final class TargetRendererTest extends TestCase
     {
         $pages = $this->renderer(documents: ['guide/setup.md' => "# Setup\n\nTwo steps.\n"])
             ->render(corpus: new TargetCorpus(
-                target: $this->target(),
+                target   : $this->target(),
                 documents: ['guide/setup.md'],
             ));
 

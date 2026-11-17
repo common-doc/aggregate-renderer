@@ -50,7 +50,7 @@ final class DocumentRouteProviderTest extends TestCase
 
         $this->expectException(RouterRuntimeException::class);
 
-        $table->router->generateUri(DocumentRouteProvider::nameFor(Targets::target(), 'unpublished.md'));
+        $table->router->generateUri(DocumentRouteProvider::nameFor(Targets::target(), documentPath: 'unpublished.md'));
     }
 
     #[Test]
@@ -76,19 +76,19 @@ final class DocumentRouteProviderTest extends TestCase
 
         static::assertSame(
             'p|aggregate-renderer|2.0|index',
-            DocumentRouteProvider::nameFor($target, 'index.md'),
+            DocumentRouteProvider::nameFor($target, documentPath: 'index.md'),
         );
         static::assertSame(
             'p|aggregate-renderer|2.0|flow-charts',
-            DocumentRouteProvider::nameFor($target, 'flow-charts.md'),
+            DocumentRouteProvider::nameFor($target, documentPath: 'flow-charts.md'),
         );
         static::assertSame(
             'p|aggregate-renderer|2.0|api-reference|index',
-            DocumentRouteProvider::nameFor($target, 'api-reference/index.md'),
+            DocumentRouteProvider::nameFor($target, documentPath: 'api-reference/index.md'),
         );
         static::assertSame(
-            DocumentRouteProvider::nameFor($target, 'flow-charts.md'),
-            DocumentRouteProvider::nameFor($target, 'flow-charts.md'),
+            DocumentRouteProvider::nameFor($target, documentPath: 'flow-charts.md'),
+            DocumentRouteProvider::nameFor($target, documentPath: 'flow-charts.md'),
         );
     }
 
@@ -99,11 +99,11 @@ final class DocumentRouteProviderTest extends TestCase
 
         static::assertSame(
             'p|aggregate-renderer|2.0|api.v2',
-            DocumentRouteProvider::nameFor($target, 'api.v2.md'),
+            DocumentRouteProvider::nameFor($target, documentPath: 'api.v2.md'),
         );
         static::assertSame(
             'p|aggregate-renderer|2.0|api|v2',
-            DocumentRouteProvider::nameFor($target, 'api/v2.md'),
+            DocumentRouteProvider::nameFor($target, documentPath: 'api/v2.md'),
         );
     }
 

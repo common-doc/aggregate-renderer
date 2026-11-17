@@ -44,10 +44,15 @@ final class PageNavigationTest extends TestCase
     {
         $table = RouteTable::create();
 
-        $this->route($table, 'p|aggregate-renderer|2.0|orphan', '/aggregate-renderer/2.0/orphan.html', [
-            'label'  => 'Orphan',
-            'parent' => 'p|aggregate-renderer|2.0|nowhere|index',
-        ]);
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|orphan',
+            path: '/aggregate-renderer/2.0/orphan.html',
+            options: [
+                'label'  => 'Orphan',
+                'parent' => 'p|aggregate-renderer|2.0|nowhere|index',
+            ],
+        );
 
         $navigation = $this->navigation($table);
         $navigation->activate('p|aggregate-renderer|2.0|orphan');
@@ -63,20 +68,35 @@ final class PageNavigationTest extends TestCase
     {
         $table = RouteTable::create();
 
-        $this->route($table, 'p|aggregate-renderer|2.0|index', '/aggregate-renderer/2.0/index.html', [
-            'label' => 'Overview',
-            'order' => 0,
-        ]);
-        $this->route($table, 'p|aggregate-renderer|2.0|guide|index', '/aggregate-renderer/2.0/guide/index.html', [
-            'label'  => 'Guide',
-            'order'  => 1,
-            'parent' => 'p|aggregate-renderer|2.0|index',
-        ]);
-        $this->route($table, 'p|aggregate-renderer|2.0|guide|setup', '/aggregate-renderer/2.0/guide/setup.html', [
-            'label'  => 'Setup',
-            'order'  => 3,
-            'parent' => 'p|aggregate-renderer|2.0|guide|index',
-        ]);
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|index',
+            path: '/aggregate-renderer/2.0/index.html',
+            options: [
+                'label' => 'Overview',
+                'order' => 0,
+            ],
+        );
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|guide|index',
+            path: '/aggregate-renderer/2.0/guide/index.html',
+            options: [
+                'label'  => 'Guide',
+                'order'  => 1,
+                'parent' => 'p|aggregate-renderer|2.0|index',
+            ],
+        );
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|guide|setup',
+            path: '/aggregate-renderer/2.0/guide/setup.html',
+            options: [
+                'label'  => 'Setup',
+                'order'  => 3,
+                'parent' => 'p|aggregate-renderer|2.0|guide|index',
+            ],
+        );
 
         $navigation = $this->navigation($table);
         $navigation->activate('p|aggregate-renderer|2.0|guide|setup');
@@ -103,20 +123,35 @@ final class PageNavigationTest extends TestCase
     {
         $table = RouteTable::create();
 
-        $this->route($table, 'p|aggregate-renderer|2.0|index', '/aggregate-renderer/2.0/index.html', [
-            'label' => 'Overview',
-            'order' => 0,
-        ]);
-        $this->route($table, 'p|aggregate-renderer|2.0|guide|index', '/aggregate-renderer/2.0/guide/index.html', [
-            'label'  => 'Guide',
-            'order'  => 1,
-            'parent' => 'p|aggregate-renderer|2.0|index',
-        ]);
-        $this->route($table, 'p|aggregate-renderer|2.0|guide|setup', '/aggregate-renderer/2.0/guide/setup.html', [
-            'label'  => 'Setup',
-            'order'  => 3,
-            'parent' => 'p|aggregate-renderer|2.0|guide|index',
-        ]);
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|index',
+            path: '/aggregate-renderer/2.0/index.html',
+            options: [
+                'label' => 'Overview',
+                'order' => 0,
+            ],
+        );
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|guide|index',
+            path: '/aggregate-renderer/2.0/guide/index.html',
+            options: [
+                'label'  => 'Guide',
+                'order'  => 1,
+                'parent' => 'p|aggregate-renderer|2.0|index',
+            ],
+        );
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|guide|setup',
+            path: '/aggregate-renderer/2.0/guide/setup.html',
+            options: [
+                'label'  => 'Setup',
+                'order'  => 3,
+                'parent' => 'p|aggregate-renderer|2.0|guide|index',
+            ],
+        );
 
         $navigation = $this->navigation($table);
         $navigation->activate('p|aggregate-renderer|2.0|guide|setup');
@@ -138,14 +173,24 @@ final class PageNavigationTest extends TestCase
     {
         $table = RouteTable::create();
 
-        $this->route($table, 'p|aggregate-renderer|2.0|zulu', '/aggregate-renderer/2.0/zulu.html', [
-            'label' => 'Zulu',
-            'order' => 5,
-        ]);
-        $this->route($table, 'p|aggregate-renderer|2.0|alpha', '/aggregate-renderer/2.0/alpha.html', [
-            'label' => 'Alpha',
-            'order' => 1,
-        ]);
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|zulu',
+            path: '/aggregate-renderer/2.0/zulu.html',
+            options: [
+                'label' => 'Zulu',
+                'order' => 5,
+            ],
+        );
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|alpha',
+            path: '/aggregate-renderer/2.0/alpha.html',
+            options: [
+                'label' => 'Alpha',
+                'order' => 1,
+            ],
+        );
 
         $navigation = $this->navigation($table);
         $navigation->activate('p|aggregate-renderer|2.0|alpha');
@@ -159,7 +204,7 @@ final class PageNavigationTest extends TestCase
         $table = RouteTable::create();
 
         $table->collector
-            ->get('/aggregate-renderer/2.0/index.html', new NoOpMiddleware(), 'p|aggregate-renderer|2.0|index')
+            ->get('/aggregate-renderer/2.0/index.html', new NoOpMiddleware(), name: 'p|aggregate-renderer|2.0|index')
             ->setOptions([
                 'navigation' => ['admin'],
                 'label'      => 'Overview',
@@ -177,10 +222,15 @@ final class PageNavigationTest extends TestCase
     {
         $table = RouteTable::create();
 
-        $this->route($table, 'p|aggregate-renderer|2.0|index', '/aggregate-renderer/2.0/index.html', [
-            'label' => 'Overview',
-            'order' => 0,
-        ]);
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|index',
+            path: '/aggregate-renderer/2.0/index.html',
+            options: [
+                'label' => 'Overview',
+                'order' => 0,
+            ],
+        );
 
         $navigation = $this->navigation($table);
 
@@ -197,10 +247,15 @@ final class PageNavigationTest extends TestCase
     {
         $table = RouteTable::create();
 
-        $this->route($table, 'p|aggregate-renderer|2.0|index', '/aggregate-renderer/2.0/index.html', [
-            'label' => 'Overview',
-            'order' => 0,
-        ]);
+        $this->route(
+            $table,
+            name: 'p|aggregate-renderer|2.0|index',
+            path: '/aggregate-renderer/2.0/index.html',
+            options: [
+                'label' => 'Overview',
+                'order' => 0,
+            ],
+        );
 
         $navigation = $this->navigation($table);
         $navigation->activate('p|aggregate-renderer|2.0|index');

@@ -31,7 +31,7 @@ final class TreeOutputTest extends TestCase
     #[Test]
     public function ignoresAPathThatOnlySharesTheRootPrefix(): void
     {
-        static::assertSame([], TreeOutput::paths('documentation/index.md', 'docs'));
+        static::assertSame([], TreeOutput::paths('documentation/index.md', root: 'docs'));
     }
 
     #[Test]
@@ -43,7 +43,7 @@ final class TreeOutputTest extends TestCase
             '',
         ]);
 
-        static::assertSame(['install.md'], TreeOutput::paths($listing, 'docs'));
+        static::assertSame(['install.md'], TreeOutput::paths($listing, root: 'docs'));
     }
 
     #[Test]
@@ -59,7 +59,7 @@ final class TreeOutputTest extends TestCase
 
         static::assertSame(
             ['guide/index.md', 'install.md', 'notes.txt'],
-            TreeOutput::paths($listing, 'docs'),
+            TreeOutput::paths($listing, root: 'docs'),
         );
     }
 
@@ -84,6 +84,6 @@ final class TreeOutputTest extends TestCase
     #[Test]
     public function trimsTheTrailingWhitespaceOfAPath(): void
     {
-        static::assertSame(['1.0'], TreeOutput::paths("docs/1.0 \r\n", 'docs'));
+        static::assertSame(['1.0'], TreeOutput::paths("docs/1.0 \r\n", root: 'docs'));
     }
 }

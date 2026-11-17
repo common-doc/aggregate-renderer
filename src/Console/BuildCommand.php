@@ -76,16 +76,16 @@ final class BuildCommand extends Command
     {
         $this->addOption(
             'site',
-            null,
-            InputOption::VALUE_REQUIRED,
-            'Path to the site configuration file.',
-            self::SITE_OPTION_DEFAULT,
+            shortcut: null,
+            mode: InputOption::VALUE_REQUIRED,
+            description: 'Path to the site configuration file.',
+            default: self::SITE_OPTION_DEFAULT,
         );
         $this->addOption(
             'json',
-            null,
-            InputOption::VALUE_NONE,
-            'Write the report to standard output as JSON.',
+            shortcut: null,
+            mode: InputOption::VALUE_NONE,
+            description: 'Write the report to standard output as JSON.',
         );
     }
 

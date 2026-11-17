@@ -102,7 +102,7 @@ final class SiteConfigReader
         }
 
         if (! is_array($decoded)) {
-            throw InvalidSiteConfigException::at('site.json', 'the file does not hold a JSON object.');
+            throw InvalidSiteConfigException::at('site.json', reason: 'the file does not hold a JSON object.');
         }
 
         return $decoded;

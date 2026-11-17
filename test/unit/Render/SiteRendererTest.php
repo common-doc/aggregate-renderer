@@ -93,7 +93,7 @@ final class SiteRendererTest extends TestCase
             'guide/setup.md' => "# Setup\n",
             'index.md'       => "# Home\n",
         ])->render(new TargetCorpus(
-            target: $this->target(),
+            target   : $this->target(),
             documents: ['guide/setup.md', 'index.md'],
         ));
 
@@ -110,7 +110,7 @@ final class SiteRendererTest extends TestCase
     {
         $pages = $this->renderer(documents: ['getting-started.md' => "# Getting started\n\nInstall it.\n"])
             ->render(new TargetCorpus(
-                target: $this->target(),
+                target   : $this->target(),
                 documents: ['getting-started.md'],
             ));
 
@@ -133,7 +133,7 @@ final class SiteRendererTest extends TestCase
     {
         $pages = $this->renderer(documents: ['index.md' => "# Home\n"])
             ->render(new TargetCorpus(
-                target: $this->target(),
+                target   : $this->target(),
                 documents: ['../escape.md', 'index.md'],
             ));
 

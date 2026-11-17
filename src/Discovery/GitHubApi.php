@@ -71,15 +71,15 @@ final readonly class GitHubApi
             /** @var mixed $decoded */
             $decoded = json_decode($body, associative: true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $malformed) {
-            throw DiscoveryException::unavailable($address, 'its answer is not JSON.', $malformed);
+            throw DiscoveryException::unavailable($address, detail: 'its answer is not JSON.', previous: $malformed);
         }
 
         if (! is_array($decoded)) {
-            throw DiscoveryException::unavailable($address, 'its answer is not a JSON array.');
+            throw DiscoveryException::unavailable($address, detail: 'its answer is not a JSON array.');
         }
 
         if ([] !== array_filter($decoded, static fn(mixed $entry): bool => ! is_array($entry))) {
-            throw DiscoveryException::unavailable($address, 'its answer is not a JSON array of objects.');
+            throw DiscoveryException::unavailable($address, detail: 'its answer is not a JSON array of objects.');
         }
 
         /** @var list<array<string, mixed>> */
@@ -108,7 +108,7 @@ final readonly class GitHubApi
         $objects = $this->answer($address);
 
         if (null === $objects) {
-            throw DiscoveryException::unavailable($address, 'it answered with status 404.');
+            throw DiscoveryException::unavailable($address, detail: 'it answered with status 404.');
         }
 
         return $objects;
@@ -128,13 +128,21 @@ final readonly class GitHubApi
                 ->withHeader('Authorization', self::AUTHORIZATION . $this->token->reveal())
                 ->withHeader('User-Agent', self::USER_AGENT);
         } catch (InvalidArgumentException $unbuildable) {
-            throw DiscoveryException::unavailable($address, 'the request could not be built.', $unbuildable);
+            throw DiscoveryException::unavailable(
+                $address,
+                detail: 'the request could not be built.',
+                previous: $unbuildable,
+            );
         }
 
         try {
             $response = $this->client->sendRequest($request);
         } catch (ClientExceptionInterface $failure) {
-            throw DiscoveryException::unavailable($address, 'the request failed in transport.', $failure);
+            throw DiscoveryException::unavailable(
+                $address,
+                detail: 'the request failed in transport.',
+                previous: $failure,
+            );
         }
 
         $status = $response->getStatusCode();

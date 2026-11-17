@@ -37,7 +37,6 @@ final readonly class ConfigHash
 
     public function __construct(SiteConfig $config)
     {
-        /** @var non-empty-string $hash */
         $hash = hash('sha256', json_encode($this->canonical($config), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
 
         $this->hash = $hash;

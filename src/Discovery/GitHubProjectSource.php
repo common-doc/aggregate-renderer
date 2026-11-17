@@ -89,7 +89,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
                 '%s/repos/%s/%s/properties/values',
                 $this->endpoint,
                 rawurlencode($this->owner($repository)),
-                rawurlencode($this->requiredString($repository, 'name')),
+                rawurlencode($this->requiredString($repository, key: 'name')),
             ),
         );
 
@@ -113,12 +113,12 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
         if (! is_array($owner)) {
             throw DiscoveryException::unavailable(
                 $this->endpoint,
-                'a repository in the listing carries no owner.',
+                detail: 'a repository in the listing carries no owner.',
             );
         }
 
         /** @var array<string, mixed> $owner */
-        return $this->requiredString($owner, 'login');
+        return $this->requiredString($owner, key: 'login');
     }
 
     /**
@@ -153,7 +153,7 @@ final readonly class GitHubProjectSource implements ProjectSourceInterface
             return null;
         }
 
-        $name = $this->requiredString($repository, 'name');
+        $name = $this->requiredString($repository, key: 'name');
 
         return new Project(
             name        : $name,

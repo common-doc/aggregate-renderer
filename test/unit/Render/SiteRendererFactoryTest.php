@@ -71,7 +71,7 @@ final class SiteRendererFactoryTest extends TestCase
         $renderer = $this->create(documents: ['index.md' => "# Home\n"]);
 
         $pages = $renderer->render(new TargetCorpus(
-            target: new Target(
+            target   : new Target(
                 project: new Project(
                     name        : 'aggregate-renderer',
                     owner       : 'common-doc',

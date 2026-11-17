@@ -87,7 +87,7 @@ final class GitReferences
 
         throw SourceUnavailableException::for(
             project: $project,
-            reason: sprintf('The default branch of "%s" could not be determined.', $project->sitePath),
+            reason : sprintf('The default branch of "%s" could not be determined.', $project->sitePath),
         );
     }
 

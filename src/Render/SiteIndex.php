@@ -82,8 +82,8 @@ final readonly class SiteIndex
     {
         $this->tree->write(
             relativePath: self::FILE,
-            contents: $this->templates->render(
-                name: ViewFactory::SITE_INDEX,
+            contents    : $this->templates->render(
+                name  : ViewFactory::SITE_INDEX,
                 params: ['entries' => $this->entries($targets)],
             ),
         );

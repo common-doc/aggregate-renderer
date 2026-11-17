@@ -58,14 +58,14 @@ final readonly class Section
     public function object(string $key): self
     {
         if (! array_key_exists($key, $this->members)) {
-            throw InvalidSiteConfigException::at($this->pathFor($key), 'is required.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), reason: 'is required.');
         }
 
         /** @var mixed $value */
         $value = $this->members[$key];
 
         if (! is_array($value)) {
-            throw InvalidSiteConfigException::at($this->pathFor($key), 'must be an object.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), reason: 'must be an object.');
         }
 
         return new self($value, $this->pathFor($key));
@@ -84,7 +84,7 @@ final readonly class Section
         $value = $this->members[$key];
 
         if (! is_bool($value)) {
-            throw InvalidSiteConfigException::at($this->pathFor($key), 'must be a boolean.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), reason: 'must be a boolean.');
         }
 
         return $value;
@@ -128,7 +128,7 @@ final readonly class Section
                 continue;
             }
 
-            throw InvalidSiteConfigException::at($this->pathFor((string) $key), 'is not a known key.');
+            throw InvalidSiteConfigException::at($this->pathFor((string) $key), reason: 'is not a known key.');
         }
     }
 
@@ -140,14 +140,14 @@ final readonly class Section
     public function string(string $key): string
     {
         if (! array_key_exists($key, $this->members)) {
-            throw InvalidSiteConfigException::at($this->pathFor($key), 'is required.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), reason: 'is required.');
         }
 
         /** @var mixed $value */
         $value = $this->members[$key];
 
         if (! is_string($value) || '' === $value) {
-            throw InvalidSiteConfigException::at($this->pathFor($key), 'must be a non-empty string.');
+            throw InvalidSiteConfigException::at($this->pathFor($key), reason: 'must be a non-empty string.');
         }
 
         return $value;

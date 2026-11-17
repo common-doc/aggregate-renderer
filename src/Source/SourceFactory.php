@@ -42,7 +42,7 @@ final readonly class SourceFactory implements SourceFactoryInterface
                 references: $references,
                 strategy  : $config->strategy,
             ),
-            documents: new GitDocuments(
+            documents : new GitDocuments(
                 checkouts : $checkouts,
                 references: $references,
                 strategy  : $config->strategy,

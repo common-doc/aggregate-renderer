@@ -93,9 +93,9 @@ final class PageAddressFactoryTest extends TestCase
         $factory = $this->factory();
         $target  = $this->target('1.0');
 
-        $first  = $factory->forDocument($target, 'guide/setup.md');
-        $second = $factory->forDocument($target, 'guide/setup.md');
-        $other  = $factory->forDocument($target, 'guide/other.md');
+        $first  = $factory->forDocument($target, documentPath: 'guide/setup.md');
+        $second = $factory->forDocument($target, documentPath: 'guide/setup.md');
+        $other  = $factory->forDocument($target, documentPath: 'guide/other.md');
 
         static::assertSame($first->file, $second->file);
         static::assertSame($first->address, $second->address);
@@ -106,7 +106,7 @@ final class PageAddressFactoryTest extends TestCase
     #[Test]
     public function keepsTheDocumentNameRatherThanTurningItIntoADirectory(): void
     {
-        $address = $this->factory()->forDocument($this->target('1.0'), 'guide/setup.md');
+        $address = $this->factory()->forDocument($this->target('1.0'), documentPath: 'guide/setup.md');
 
         static::assertSame('aggregate-renderer/1.0/guide/setup.html', $address->file);
         static::assertSame('/aggregate-renderer/1.0/guide/setup.html', $address->path());
@@ -130,7 +130,7 @@ final class PageAddressFactoryTest extends TestCase
     #[Test]
     public function mapsAPatchVersionToItsOwnDirectory(): void
     {
-        $address = $this->factory()->forDocument($this->target('2.1.4'), 'guide/index.md');
+        $address = $this->factory()->forDocument($this->target('2.1.4'), documentPath: 'guide/index.md');
 
         static::assertSame('aggregate-renderer/2.1.4/guide/index.html', $address->file);
         static::assertSame(
@@ -142,7 +142,7 @@ final class PageAddressFactoryTest extends TestCase
     #[Test]
     public function mapsTheVersionRootToTheVersionDirectory(): void
     {
-        $address = $this->factory()->forDocument($this->target('2.1'), 'index.md');
+        $address = $this->factory()->forDocument($this->target('2.1'), documentPath: 'index.md');
 
         static::assertSame('aggregate-renderer/2.1/index.html', $address->file);
         static::assertSame('https://docs.example.org/aggregate-renderer/2.1/index.html', $address->address);

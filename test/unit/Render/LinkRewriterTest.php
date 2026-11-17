@@ -50,7 +50,7 @@ final class LinkRewriterTest extends TestCase
     #[Test]
     public function countsAnEmptyHrefAsANonDocumentLink(): void
     {
-        static::assertSame('', $this->hrefOf('', 'index.md'));
+        static::assertSame('', $this->hrefOf('', fromPath: 'index.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::NonDocument));
     }
 
@@ -74,7 +74,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             '/aggregate-renderer/2.0/guide/advanced.html#install',
-            $this->hrefOf('advanced.md#install', 'guide/setup.md'),
+            $this->hrefOf('advanced.md#install', fromPath: 'guide/setup.md'),
         );
     }
 
@@ -83,14 +83,14 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             '/aggregate-renderer/2.0/guide/advanced.html?tab=2',
-            $this->hrefOf('advanced.md?tab=2', 'guide/setup.md'),
+            $this->hrefOf('advanced.md?tab=2', fromPath: 'guide/setup.md'),
         );
     }
 
     #[Test]
     public function leavesAFragmentOfTheSamePageAlone(): void
     {
-        static::assertSame('#install', $this->hrefOf('#install', 'guide/setup.md'));
+        static::assertSame('#install', $this->hrefOf('#install', fromPath: 'guide/setup.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::Anchors));
         static::assertSame(0, $this->links->count(LinkOutcome::Documents));
     }
@@ -98,7 +98,7 @@ final class LinkRewriterTest extends TestCase
     #[Test]
     public function leavesALinkThatEscapesTheVersionRootAlone(): void
     {
-        static::assertSame('../escape.md', $this->hrefOf('../escape.md', 'index.md'));
+        static::assertSame('../escape.md', $this->hrefOf('../escape.md', fromPath: 'index.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::Unresolved));
         static::assertSame(0, $this->links->count(LinkOutcome::Documents));
     }
@@ -106,7 +106,7 @@ final class LinkRewriterTest extends TestCase
     #[Test]
     public function leavesALinkToAnUnpublishedDocumentAlone(): void
     {
-        static::assertSame('missing.md', $this->hrefOf('missing.md', 'guide/setup.md'));
+        static::assertSame('missing.md', $this->hrefOf('missing.md', fromPath: 'guide/setup.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::Unresolved));
         static::assertSame(0, $this->links->count(LinkOutcome::Documents));
     }
@@ -116,7 +116,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             'mailto:docs@example.org',
-            $this->hrefOf('mailto:docs@example.org', 'guide/setup.md'),
+            $this->hrefOf('mailto:docs@example.org', fromPath: 'guide/setup.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::External));
         static::assertSame(0, $this->links->count(LinkOutcome::Documents));
@@ -127,7 +127,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             'https://example.org/api.md',
-            $this->hrefOf('https://example.org/api.md', 'guide/setup.md'),
+            $this->hrefOf('https://example.org/api.md', fromPath: 'guide/setup.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::External));
         static::assertSame(0, $this->links->count(LinkOutcome::Documents));
@@ -136,7 +136,7 @@ final class LinkRewriterTest extends TestCase
     #[Test]
     public function leavesANonDocumentLinkAlone(): void
     {
-        static::assertSame('images/diagram.png', $this->hrefOf('images/diagram.png', 'guide/setup.md'));
+        static::assertSame('images/diagram.png', $this->hrefOf('images/diagram.png', fromPath: 'guide/setup.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::NonDocument));
         static::assertSame(0, $this->links->count(LinkOutcome::Documents));
     }
@@ -146,7 +146,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             '/elsewhere/index.html',
-            $this->hrefOf('/elsewhere/index.html', 'guide/setup.md'),
+            $this->hrefOf('/elsewhere/index.html', fromPath: 'guide/setup.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::Absolute));
         static::assertSame(0, $this->links->count(LinkOutcome::Documents));
@@ -190,7 +190,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             '/aggregate-renderer/2.0/guide/advanced.html',
-            $this->hrefOf('advanced.md', 'guide/setup.md'),
+            $this->hrefOf('advanced.md', fromPath: 'guide/setup.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::Documents));
         static::assertSame(0, $this->links->count(LinkOutcome::Unresolved));
@@ -201,7 +201,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             '/aggregate-renderer/2.0/flow-charts.html',
-            $this->hrefOf('../flow-charts.md', 'guide/setup.md'),
+            $this->hrefOf('../flow-charts.md', fromPath: 'guide/setup.md'),
         );
     }
 
@@ -210,11 +210,11 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             '/aggregate-renderer/2.0/guide/index.html',
-            $this->hrefOf('index.md', 'guide/setup.md'),
+            $this->hrefOf('index.md', fromPath: 'guide/setup.md'),
         );
         static::assertSame(
             '/aggregate-renderer/2.0/index.html',
-            $this->hrefOf('../index.md', 'guide/setup.md'),
+            $this->hrefOf('../index.md', fromPath: 'guide/setup.md'),
         );
     }
 
@@ -223,7 +223,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame(
             '/aggregate-renderer/2.0/flow-charts.html',
-            $this->hrefOf('./flow-charts.md', 'index.md'),
+            $this->hrefOf('./flow-charts.md', fromPath: 'index.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::Documents));
     }

@@ -42,7 +42,7 @@ final class DocumentTemplateTest extends TestCase
     public function theComposedPageCarriesOneShellAroundOneBody(): void
     {
         $html = $this->templates()->render(
-            name: ViewFactory::DOCUMENT,
+            name  : ViewFactory::DOCUMENT,
             params: ['documentBody' => self::BODY, 'page' => $this->page()],
         );
 
@@ -82,7 +82,7 @@ final class DocumentTemplateTest extends TestCase
     public function theLayoutEmitsTheShellTheDocumentLeavesOut(): void
     {
         $html = $this->templates()->render(
-            name: ViewFactory::LAYOUT,
+            name  : ViewFactory::LAYOUT,
             params: ['content' => '<main class="document">' . self::BODY . '</main>', 'layout' => false],
         );
 
@@ -97,7 +97,7 @@ final class DocumentTemplateTest extends TestCase
     public function theTitleOfThePageComesFromItsLabel(): void
     {
         $html = $this->templates()->render(
-            name: ViewFactory::DOCUMENT,
+            name  : ViewFactory::DOCUMENT,
             params: ['documentBody' => self::BODY, 'page' => $this->page()],
         );
 
@@ -119,7 +119,7 @@ final class DocumentTemplateTest extends TestCase
     private function renderDocument(): string
     {
         return $this->templates()->render(
-            name: ViewFactory::DOCUMENT,
+            name  : ViewFactory::DOCUMENT,
             params: ['documentBody' => self::BODY, 'page' => null, 'layout' => false],
         );
     }

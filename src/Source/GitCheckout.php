@@ -157,7 +157,7 @@ final class GitCheckout
         ) {
             throw SourceUnavailableException::for(
                 project: $project,
-                reason: sprintf('The cache directory "%s" could not be created.', $directory),
+                reason : sprintf('The cache directory "%s" could not be created.', $directory),
             );
         }
 

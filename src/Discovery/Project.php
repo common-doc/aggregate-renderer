@@ -49,10 +49,10 @@ final readonly class Project
         string $sitePath,
         string $docDirectory,
     ) {
-        $this->name         = self::requireValue($name, 'repository name');
-        $this->owner        = self::requireValue($owner, 'owner');
-        $this->sitePath     = self::requireValue($sitePath, 'site path');
-        $this->docDirectory = self::requireValue($docDirectory, 'documentation directory');
+        $this->name         = self::requireValue($name, field: 'repository name');
+        $this->owner        = self::requireValue($owner, field: 'owner');
+        $this->sitePath     = self::requireValue($sitePath, field: 'site path');
+        $this->docDirectory = self::requireValue($docDirectory, field: 'documentation directory');
 
         if (preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $this->sitePath) !== 1) {
             throw new InvalidArgumentException(

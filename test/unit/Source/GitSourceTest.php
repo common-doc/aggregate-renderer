@@ -55,7 +55,7 @@ final class GitSourceTest extends TestCase
 
         static::assertSame(['1.0.x'], $source->candidates($this->project()));
         static::assertSame(['index.md'], $source->documents($this->target()));
-        static::assertSame("# Aggregate renderer\n", $source->contents($this->target(), 'index.md'));
+        static::assertSame("# Aggregate renderer\n", $source->contents($this->target(), documentPath: 'index.md'));
     }
 
     protected function setUp(): void
@@ -100,7 +100,7 @@ final class GitSourceTest extends TestCase
                 references: $references,
                 strategy  : Strategy::Ref,
             ),
-            documents: new GitDocuments(
+            documents : new GitDocuments(
                 checkouts : $checkout,
                 references: $references,
                 strategy  : Strategy::Ref,

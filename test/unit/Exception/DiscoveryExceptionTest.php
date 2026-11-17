@@ -44,7 +44,11 @@ final class DiscoveryExceptionTest extends TestCase
     public function recordsAnUnreachableBoundaryWithItsCause(): void
     {
         $cause  = new RuntimeException('the transport refused the connection');
-        $failed = DiscoveryException::unavailable('https://api.github.com', 'it answered with status 500.', $cause);
+        $failed = DiscoveryException::unavailable(
+            'https://api.github.com',
+            detail: 'it answered with status 500.',
+            previous: $cause,
+        );
 
         static::assertSame(ReasonCode::DiscoveryUnavailable, $failed->reasonCode);
         static::assertSame(
@@ -57,7 +61,7 @@ final class DiscoveryExceptionTest extends TestCase
     #[Test]
     public function recordsAnUnreachableBoundaryWithoutACause(): void
     {
-        $failed = DiscoveryException::unavailable('https://api.github.com', 'its answer is not JSON.');
+        $failed = DiscoveryException::unavailable('https://api.github.com', detail: 'its answer is not JSON.');
 
         static::assertNull($failed->getPrevious());
     }

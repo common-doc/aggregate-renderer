@@ -109,7 +109,7 @@ final readonly class ProjectOutcome
         return match (true) {
             [] === $reasons => ProjectStatus::Ok,
             0 === $rendered => ProjectStatus::Failed,
-            default => ProjectStatus::Partial,
+            default         => ProjectStatus::Partial,
         };
     }
 }

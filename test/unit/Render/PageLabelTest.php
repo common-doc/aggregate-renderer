@@ -30,11 +30,11 @@ final class PageLabelTest extends TestCase
     {
         static::assertSame(
             'Flow Charts',
-            PageLabel::for(Targets::target(), 'flow-charts.md'),
+            PageLabel::for(Targets::target(), documentPath: 'flow-charts.md'),
         );
         static::assertSame(
             'Getting Started',
-            PageLabel::for(Targets::target(), 'guide/getting_started.md'),
+            PageLabel::for(Targets::target(), documentPath: 'guide/getting_started.md'),
         );
     }
 
@@ -43,17 +43,17 @@ final class PageLabelTest extends TestCase
     {
         static::assertSame(
             'Get Started',
-            PageLabel::for(Targets::target(), 'get-started/index.md'),
+            PageLabel::for(Targets::target(), documentPath: 'get-started/index.md'),
         );
         static::assertSame(
             'Reference',
-            PageLabel::for(Targets::target(), 'api/reference/index.md'),
+            PageLabel::for(Targets::target(), documentPath: 'api/reference/index.md'),
         );
     }
 
     #[Test]
     public function namesTheProjectForTheVersionLandingPage(): void
     {
-        static::assertSame('aggregate-renderer', PageLabel::for(Targets::target(), 'index.md'));
+        static::assertSame('aggregate-renderer', PageLabel::for(Targets::target(), documentPath: 'index.md'));
     }
 }

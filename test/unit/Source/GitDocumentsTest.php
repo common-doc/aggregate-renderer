@@ -81,7 +81,7 @@ final class GitDocumentsTest extends TestCase
 
         static::assertSame(
             "# Aggregate renderer\n",
-            $this->documents($runner, Strategy::Ref)->contents($this->target('1.0'), 'index.md'),
+            $this->documents($runner, Strategy::Ref)->contents($this->target('1.0'), documentPath: 'index.md'),
         );
 
         static::assertSame(

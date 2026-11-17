@@ -183,7 +183,7 @@ final class GitHubProjectSourceTest extends TestCase
     #[Test]
     public function refusesAnUnreachableBoundary(): void
     {
-        $client = new RecordedClient($this->response('{"message":"Server Error"}', 500));
+        $client = new RecordedClient($this->response('{"message":"Server Error"}', status: 500));
 
         try {
             $this->source($client)->all();
@@ -202,7 +202,7 @@ final class GitHubProjectSourceTest extends TestCase
     public function refusesARejectedCredential(): void
     {
         $client = new RecordedClient(
-            $this->response('{"message":"Bad credentials"}', 401),
+            $this->response('{"message":"Bad credentials"}', status: 401),
         );
 
         try {
@@ -319,7 +319,7 @@ final class GitHubProjectSourceTest extends TestCase
     {
         $client = new RecordedClient(
             $this->response($this->listing($this->repository('no-target'))),
-            $this->response($this->properties($this->property('docs', 'unrelated'))),
+            $this->response($this->properties($this->property('docs', name: 'unrelated'))),
         );
 
         static::assertSame([], $this->source($client)->all());
@@ -333,7 +333,7 @@ final class GitHubProjectSourceTest extends TestCase
     {
         $client = new RecordedClient(
             $this->response($this->listing($this->repository('no-properties'))),
-            $this->response('{"message":"Not Found"}', 404),
+            $this->response('{"message":"Not Found"}', status: 404),
         );
 
         static::assertSame([], $this->source($client)->all());

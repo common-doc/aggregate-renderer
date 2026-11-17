@@ -89,7 +89,7 @@ final class TemplatePrecedenceTest extends TestCase
 
         static::assertSame(ViewFactory::LAYOUT, $templates['layout'] ?? null);
         static::assertTrue(str_ends_with(
-            haystack: self::normalised($this->mapped($templates, 'aggregate::layout')),
+            haystack: self::normalised($this->mapped($templates, name: 'aggregate::layout')),
             needle  : '/templates/aggregate/layout.phtml',
         ));
     }
