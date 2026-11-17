@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace CommonDocTest\Aggregate\Build;
 
+use CommonDoc\Aggregate\Build\CorpusCheck;
 use CommonDoc\Aggregate\Build\PageResult;
 use CommonDoc\Aggregate\Build\PageStatus;
 use CommonDoc\Aggregate\Build\ProjectBuild;
@@ -35,15 +36,21 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 use function array_map;
+use function file_get_contents;
 use function file_put_contents;
 use function in_array;
 use function is_file;
+use function json_decode;
 use function mkdir;
 
+use const JSON_THROW_ON_ERROR;
+
 #[CoversClass(SiteBuild::class)]
+#[CoversClass(CorpusCheck::class)]
 #[CoversClass(ProjectBuild::class)]
 #[CoversClass(ProjectOutcome::class)]
 #[CoversMethod(SiteBuild::class, 'build')]
+#[CoversMethod(CorpusCheck::class, 'violation')]
 #[CoversMethod(ProjectBuild::class, 'outcome')]
 #[CoversMethod(ProjectOutcome::class, 'for')]
 #[CoversMethod(ProjectOutcome::class, 'failed')]
@@ -179,6 +186,28 @@ final class SiteBuildTest extends TestCase
     }
 
     #[Test]
+    public function leavesThePublishedTreeInPlaceWhenTheCorpusIsBlocked(): void
+    {
+        mkdir(
+            directory: "{$this->directory->path}/site",
+            recursive: true,
+        );
+        file_put_contents(
+            filename: "{$this->directory->path}/site/published.html",
+            data    : 'published',
+        );
+
+        $this->build(
+            projects  : ['widget', 'widget'],
+            candidates: ['widget' => ['1.0.x']],
+            renderer  : new SiteRenderer(),
+        )
+            ->build($this->config());
+
+        static::assertFileExists("{$this->directory->path}/site/published.html");
+    }
+
+    #[Test]
     public function ordersProjectsBySitePath(): void
     {
         $report = $this->build(
@@ -230,6 +259,40 @@ final class SiteBuildTest extends TestCase
             [ReasonCode::MissingDocDirectory, ReasonCode::RenderFailed],
             $outcome->result->reasonCodes,
         );
+    }
+
+    #[Test]
+    public function refusesToRenderACorpusThatPutsTwoProjectsOnOneSitePath(): void
+    {
+        $renderer = new SiteRenderer();
+
+        $report = $this->build(
+            projects  : ['widget', 'widget'],
+            candidates: ['widget' => ['1.0.x']],
+            renderer  : $renderer,
+        )
+            ->build($this->config());
+
+        static::assertSame(2, $report->exitCode);
+        static::assertSame(0, $report->totals->pages);
+        static::assertSame(2, $report->totals->skipped);
+        static::assertSame(ProjectStatus::Skipped, $report->projects[0]->status);
+        static::assertSame([ReasonCode::DuplicateSlug], $report->projects[0]->reasonCodes);
+        static::assertSame([], $renderer->rendered);
+        static::assertSame(0, $renderer->notFoundPages);
+        static::assertCount(0, $renderer->indexed);
+
+        /** @var array{exitCode: int, totals: array{pages: int}, projects: list<array{status: string, errors: list<array{reasonCode: string}>}>} $written */
+        $written = json_decode(
+            json       : (string) file_get_contents("{$this->directory->path}/report.json"),
+            associative: true,
+            flags      : JSON_THROW_ON_ERROR,
+        );
+
+        static::assertSame(2, $written['exitCode']);
+        static::assertSame(0, $written['totals']['pages']);
+        static::assertSame('skipped', $written['projects'][0]['status']);
+        static::assertSame('duplicate-slug', $written['projects'][0]['errors'][0]['reasonCode']);
     }
 
     #[Test]
@@ -348,6 +411,7 @@ final class SiteBuildTest extends TestCase
                 $renderer,
                 new StrategyFactory(),
             ),
+            corpus      : new CorpusCheck(),
         );
     }
 

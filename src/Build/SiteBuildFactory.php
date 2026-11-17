@@ -64,6 +64,7 @@ final readonly class SiteBuildFactory implements SiteBuildFactoryInterface
                 renderer  : $renderer,
                 strategies: $this->strategies,
             ),
+            corpus      : new CorpusCheck(),
         );
     }
 }
