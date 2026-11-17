@@ -66,7 +66,7 @@ final class LinkRewriterTest extends TestCase
         static::assertStringContainsString('src="./diagram.png"', $html);
         static::assertStringContainsString('href="/aggregate-renderer/2.0/flow-charts.html"', $html);
         static::assertSame(1, $this->links->count(LinkOutcome::NonDocument));
-        static::assertSame(1, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(1, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -91,8 +91,8 @@ final class LinkRewriterTest extends TestCase
     public function leavesAFragmentOfTheSamePageAlone(): void
     {
         static::assertSame('#install', $this->hrefOf('#install', fromPath: 'guide/setup.md'));
-        static::assertSame(1, $this->links->count(LinkOutcome::Anchors));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(1, $this->links->count(LinkOutcome::Anchor));
+        static::assertSame(0, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -100,7 +100,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame('../escape.md', $this->hrefOf('../escape.md', fromPath: 'index.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::Unresolved));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -108,7 +108,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame('missing.md', $this->hrefOf('missing.md', fromPath: 'guide/setup.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::Unresolved));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -119,7 +119,7 @@ final class LinkRewriterTest extends TestCase
             $this->hrefOf('mailto:docs@example.org', fromPath: 'guide/setup.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::External));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -130,7 +130,7 @@ final class LinkRewriterTest extends TestCase
             $this->hrefOf('https://example.org/api.md', fromPath: 'guide/setup.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::External));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -138,7 +138,7 @@ final class LinkRewriterTest extends TestCase
     {
         static::assertSame('images/diagram.png', $this->hrefOf('images/diagram.png', fromPath: 'guide/setup.md'));
         static::assertSame(1, $this->links->count(LinkOutcome::NonDocument));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -149,7 +149,7 @@ final class LinkRewriterTest extends TestCase
             $this->hrefOf('/elsewhere/index.html', fromPath: 'guide/setup.md'),
         );
         static::assertSame(1, $this->links->count(LinkOutcome::Absolute));
-        static::assertSame(0, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(0, $this->links->count(LinkOutcome::Document));
     }
 
     #[Test]
@@ -192,7 +192,7 @@ final class LinkRewriterTest extends TestCase
             '/aggregate-renderer/2.0/guide/advanced.html',
             $this->hrefOf('advanced.md', fromPath: 'guide/setup.md'),
         );
-        static::assertSame(1, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(1, $this->links->count(LinkOutcome::Document));
         static::assertSame(0, $this->links->count(LinkOutcome::Unresolved));
     }
 
@@ -225,7 +225,7 @@ final class LinkRewriterTest extends TestCase
             '/aggregate-renderer/2.0/flow-charts.html',
             $this->hrefOf('./flow-charts.md', fromPath: 'index.md'),
         );
-        static::assertSame(1, $this->links->count(LinkOutcome::Documents));
+        static::assertSame(1, $this->links->count(LinkOutcome::Document));
     }
 
     protected function setUp(): void

@@ -141,7 +141,7 @@ final readonly class LinkRewriter
             return $this->counted(LinkOutcome::Unresolved);
         }
 
-        $this->links->add(LinkOutcome::Documents);
+        $this->links->add(LinkOutcome::Document);
 
         return $uri . $link->suffix;
     }

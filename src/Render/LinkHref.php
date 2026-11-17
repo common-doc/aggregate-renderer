@@ -90,7 +90,7 @@ final readonly class LinkHref
         return new self(
             documentPath: $documentPath,
             suffix      : $parts['suffix'],
-            outcome     : LinkOutcome::Documents,
+            outcome     : LinkOutcome::Document,
         );
     }
 
@@ -154,7 +154,7 @@ final readonly class LinkHref
         }
 
         if (str_starts_with($href, '#')) {
-            return LinkOutcome::Anchors;
+            return LinkOutcome::Anchor;
         }
 
         if (str_starts_with($href, '//') || 1 === preg_match(self::SCHEME_PATTERN, $href)) {

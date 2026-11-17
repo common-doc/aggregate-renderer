@@ -23,7 +23,7 @@ namespace CommonDoc\Aggregate\Build;
 enum LinkOutcome: string
 {
     /** Rewritten to the published address of the document it names. */
-    case Documents = 'documents';
+    case Document = 'documents';
 
     /** Names a document the router does not hold, so it was left exactly as written. */
     case Unresolved = 'unresolved';
@@ -35,7 +35,7 @@ enum LinkOutcome: string
     case External = 'external';
 
     /** A fragment of the page it appears on. */
-    case Anchors = 'anchors';
+    case Anchor = 'anchors';
 
     /** A relative link that does not name a document, such as an image or a plain file. */
     case NonDocument = 'non-document-link';

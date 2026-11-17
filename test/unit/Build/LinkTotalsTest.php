@@ -41,11 +41,11 @@ final class LinkTotalsTest extends TestCase
     {
         $totals = new LinkTotals();
 
-        $totals->add(LinkOutcome::Documents);
-        $totals->add(LinkOutcome::Documents);
+        $totals->add(LinkOutcome::Document);
+        $totals->add(LinkOutcome::Document);
         $totals->add(LinkOutcome::Unresolved);
 
-        static::assertSame(2, $totals->count(LinkOutcome::Documents));
+        static::assertSame(2, $totals->count(LinkOutcome::Document));
         static::assertSame(1, $totals->count(LinkOutcome::Unresolved));
     }
 
@@ -53,11 +53,11 @@ final class LinkTotalsTest extends TestCase
     public function resetReturnsEveryCountToZero(): void
     {
         $totals = new LinkTotals();
-        $totals->add(LinkOutcome::Documents);
+        $totals->add(LinkOutcome::Document);
 
         $totals->reset();
 
-        static::assertSame(0, $totals->count(LinkOutcome::Documents));
+        static::assertSame(0, $totals->count(LinkOutcome::Document));
 
         foreach ($totals->toArray() as $count) {
             static::assertSame(0, $count);
@@ -68,12 +68,12 @@ final class LinkTotalsTest extends TestCase
     public function serialisesEveryOutcomeInDeclarationOrder(): void
     {
         $totals = new LinkTotals();
-        $totals->add(LinkOutcome::Documents);
+        $totals->add(LinkOutcome::Document);
         $totals->add(LinkOutcome::NonDocument);
 
         $serialised = $totals->toArray();
 
-        static::assertSame(1, $serialised[LinkOutcome::Documents->value]);
+        static::assertSame(1, $serialised[LinkOutcome::Document->value]);
         static::assertSame(1, $serialised[LinkOutcome::NonDocument->value]);
         static::assertSame(0, $serialised[LinkOutcome::Unresolved->value]);
         static::assertCount(count(LinkOutcome::cases()), $serialised);
